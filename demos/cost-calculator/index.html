@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - LLM Cost Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 md:p-12">
+
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-12 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">→</span>
+                <span class="text-slate-600">Interactive Demo</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">LLM Cost Calculator</h1>
+            <p class="text-lg text-slate-600">Estimate API costs by model and token usage. Adjust sliders to see real-time pricing.</p>
+        </header>
+
+        <!-- Calculator -->
+        <section class="mb-12">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+
+                <!-- Model Selection -->
+                <div class="mb-8">
+                    <label class="block text-sm font-bold text-slate-700 mb-3">Select Model</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <button onclick="selectModel('claude-opus')" id="btn-claude-opus" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-violet-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">Anthropic</div>
+                            <div class="font-bold text-slate-900 text-sm">Claude Opus 4.5</div>
+                        </button>
+                        <button onclick="selectModel('claude-sonnet')" id="btn-claude-sonnet" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-violet-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">Anthropic</div>
+                            <div class="font-bold text-slate-900 text-sm">Claude Sonnet 4.5</div>
+                        </button>
+                        <button onclick="selectModel('gpt-5')" id="btn-gpt-5" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-blue-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">OpenAI</div>
+                            <div class="font-bold text-slate-900 text-sm">GPT-5.1</div>
+                        </button>
+                        <button onclick="selectModel('gpt-5-mini')" id="btn-gpt-5-mini" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-blue-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">OpenAI</div>
+                            <div class="font-bold text-slate-900 text-sm">GPT-5.1-mini</div>
+                        </button>
+                        <button onclick="selectModel('gemini-pro')" id="btn-gemini-pro" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-emerald-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">Google</div>
+                            <div class="font-bold text-slate-900 text-sm">Gemini 3 Pro</div>
+                        </button>
+                        <button onclick="selectModel('gemini-flash')" id="btn-gemini-flash" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-emerald-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">Google</div>
+                            <div class="font-bold text-slate-900 text-sm">Gemini 3 Flash</div>
+                        </button>
+                        <button onclick="selectModel('grok-4')" id="btn-grok-4" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-orange-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">xAI</div>
+                            <div class="font-bold text-slate-900 text-sm">Grok 4.1</div>
+                        </button>
+                        <button onclick="selectModel('claude-haiku')" id="btn-claude-haiku" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-violet-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">Anthropic</div>
+                            <div class="font-bold text-slate-900 text-sm">Claude Haiku 4</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Token Sliders -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">
+                            Input Tokens
+                            <span id="input-display" class="float-right font-normal text-indigo-600">10,000</span>
+                        </label>
+                        <input type="range" id="input-slider" min="1000" max="500000" value="10000" step="1000"
+                               class="w-full" oninput="updateCalculation()">
+                        <div class="flex justify-between text-xs text-slate-400 mt-1">
+                            <span>1K</span>
+                            <span>500K</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">
+                            Output Tokens
+                            <span id="output-display" class="float-right font-normal text-indigo-600">2,000</span>
+                        </label>
+                        <input type="range" id="output-slider" min="100" max="100000" value="2000" step="100"
+                               class="w-full" oninput="updateCalculation()">
+                        <div class="flex justify-between text-xs text-slate-400 mt-1">
+                            <span>100</span>
+                            <span>100K</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cost Display -->
+                <div id="cost-display" class="bg-indigo-500 text-white p-6 rounded-xl">
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-sm opacity-80 mb-1">Input Cost</div>
+                            <div id="input-cost" class="text-2xl font-bold">$0.05</div>
+                        </div>
+                        <div>
+                            <div class="text-sm opacity-80 mb-1">Output Cost</div>
+                            <div id="output-cost" class="text-2xl font-bold">$0.05</div>
+                        </div>
+                        <div class="border-l border-white/30">
+                            <div class="text-sm opacity-80 mb-1">Total Cost</div>
+                            <div id="total-cost" class="text-2xl font-bold">$0.10</div>
+                        </div>
+                    </div>
+                    <div id="model-info" class="text-center mt-4 pt-4 border-t border-white/20 text-sm opacity-80">
+                        Select a model above to see pricing
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Batch Calculator -->
+        <section class="mb-12">
+            <h2 class="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider text-sm">Batch Estimates</h2>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <p class="text-sm text-slate-600 mb-4">Based on your current token settings, here's what different batch sizes would cost:</p>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="text-center p-4 bg-slate-50 rounded-lg">
+                        <div class="text-2xl font-bold text-slate-900" id="batch-10">$1.00</div>
+                        <div class="text-xs text-slate-500">10 requests</div>
+                    </div>
+                    <div class="text-center p-4 bg-slate-50 rounded-lg">
+                        <div class="text-2xl font-bold text-slate-900" id="batch-100">$10.00</div>
+                        <div class="text-xs text-slate-500">100 requests</div>
+                    </div>
+                    <div class="text-center p-4 bg-slate-50 rounded-lg">
+                        <div class="text-2xl font-bold text-slate-900" id="batch-1000">$100.00</div>
+                        <div class="text-xs text-slate-500">1,000 requests</div>
+                    </div>
+                    <div class="text-center p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                        <div class="text-2xl font-bold text-indigo-700" id="batch-custom">$0.00</div>
+                        <div class="text-xs text-slate-500">
+                            <input type="number" id="custom-batch" value="500" min="1" max="100000"
+                                   class="w-16 text-center border rounded px-1 py-0.5" onchange="updateCalculation()">
+                            requests
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Reference -->
+        <section class="mb-12">
+            <h2 class="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider text-sm">Pricing Reference</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full bg-white rounded-lg shadow-sm border border-slate-200 text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-200">
+                            <th class="text-left p-3 font-bold text-slate-900">Model</th>
+                            <th class="text-right p-3 font-bold text-slate-900">Input ($/1M)</th>
+                            <th class="text-right p-3 font-bold text-slate-900">Output ($/1M)</th>
+                            <th class="text-left p-3 font-bold text-slate-900">Best For</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pricing-table">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">Reference pricing as of Nov 2025. Check provider docs for current rates.</p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                ← Back to SPINE Demos
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+    <script>
+        const models = {
+            'claude-opus': {
+                name: 'Claude Opus 4.5',
+                provider: 'Anthropic',
+                color: 'violet',
+                input: 5.0,
+                output: 25.0,
+                bestFor: 'Planning, agentic workflows'
+            },
+            'claude-sonnet': {
+                name: 'Claude Sonnet 4.5',
+                provider: 'Anthropic',
+                color: 'violet',
+                input: 3.0,
+                output: 15.0,
+                bestFor: 'Balanced performance'
+            },
+            'claude-haiku': {
+                name: 'Claude Haiku 4',
+                provider: 'Anthropic',
+                color: 'violet',
+                input: 0.25,
+                output: 1.25,
+                bestFor: 'Fast, cost-effective'
+            },
+            'gpt-5': {
+                name: 'GPT-5.1',
+                provider: 'OpenAI',
+                color: 'blue',
+                input: 5.0,
+                output: 15.0,
+                bestFor: 'Code execution'
+            },
+            'gpt-5-mini': {
+                name: 'GPT-5.1-mini',
+                provider: 'OpenAI',
+                color: 'blue',
+                input: 0.4,
+                output: 1.6,
+                bestFor: 'Fast automation'
+            },
+            'gemini-pro': {
+                name: 'Gemini 3 Pro',
+                provider: 'Google',
+                color: 'emerald',
+                input: 2.0,
+                output: 8.0,
+                bestFor: 'Multimodal tasks'
+            },
+            'gemini-flash': {
+                name: 'Gemini 3 Flash',
+                provider: 'Google',
+                color: 'emerald',
+                input: 0.15,
+                output: 0.6,
+                bestFor: 'Fast multimodal'
+            },
+            'grok-4': {
+                name: 'Grok 4.1',
+                provider: 'xAI',
+                color: 'orange',
+                input: 3.0,
+                output: 12.0,
+                bestFor: 'Real-time data'
+            }
+        };
+
+        let selectedModel = 'claude-opus';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            populatePricingTable();
+            selectModel('claude-opus');
+        });
+
+        function selectModel(modelId) {
+            selectedModel = modelId;
+            const model = models[modelId];
+
+            // Update button styles
+            document.querySelectorAll('.model-btn').forEach(btn => {
+                btn.classList.remove('border-violet-500', 'border-blue-500', 'border-emerald-500', 'border-orange-500', 'bg-violet-50', 'bg-blue-50', 'bg-emerald-50', 'bg-orange-50');
+                btn.classList.add('border-slate-200');
+            });
+
+            const selectedBtn = document.getElementById(`btn-${modelId}`);
+            selectedBtn.classList.remove('border-slate-200');
+            selectedBtn.classList.add(`border-${model.color}-500`, `bg-${model.color}-50`);
+
+            // Update cost display color
+            const costDisplay = document.getElementById('cost-display');
+            costDisplay.className = `bg-${model.color}-500 text-white p-6 rounded-xl`;
+
+            updateCalculation();
+        }
+
+        function updateCalculation() {
+            const model = models[selectedModel];
+            const inputTokens = parseInt(document.getElementById('input-slider').value);
+            const outputTokens = parseInt(document.getElementById('output-slider').value);
+            const customBatch = parseInt(document.getElementById('custom-batch').value) || 1;
+
+            // Update displays
+            document.getElementById('input-display').textContent = inputTokens.toLocaleString();
+            document.getElementById('output-display').textContent = outputTokens.toLocaleString();
+
+            // Calculate costs
+            const inputCost = (inputTokens / 1000000) * model.input;
+            const outputCost = (outputTokens / 1000000) * model.output;
+            const totalCost = inputCost + outputCost;
+
+            // Update cost display
+            document.getElementById('input-cost').textContent = formatCost(inputCost);
+            document.getElementById('output-cost').textContent = formatCost(outputCost);
+            document.getElementById('total-cost').textContent = formatCost(totalCost);
+            document.getElementById('model-info').textContent =
+                `${model.name} @ $${model.input}/$${model.output} per 1M tokens`;
+
+            // Update batch estimates
+            document.getElementById('batch-10').textContent = formatCost(totalCost * 10);
+            document.getElementById('batch-100').textContent = formatCost(totalCost * 100);
+            document.getElementById('batch-1000').textContent = formatCost(totalCost * 1000);
+            document.getElementById('batch-custom').textContent = formatCost(totalCost * customBatch);
+        }
+
+        function formatCost(cost) {
+            if (cost < 0.01) return '$' + cost.toFixed(4);
+            if (cost < 1) return '$' + cost.toFixed(3);
+            if (cost < 100) return '$' + cost.toFixed(2);
+            return '$' + cost.toFixed(0);
+        }
+
+        function populatePricingTable() {
+            const tbody = document.getElementById('pricing-table');
+            const colorDots = {
+                violet: 'bg-violet-500',
+                blue: 'bg-blue-500',
+                emerald: 'bg-emerald-500',
+                orange: 'bg-orange-500'
+            };
+
+            tbody.innerHTML = Object.entries(models).map(([id, model]) => `
+                <tr class="border-b border-slate-100 hover:bg-slate-50 cursor-pointer" onclick="selectModel('${id}')">
+                    <td class="p-3">
+                        <span class="inline-flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full ${colorDots[model.color]}"></span>
+                            <span class="font-medium">${model.name}</span>
+                        </span>
+                    </td>
+                    <td class="p-3 text-right text-slate-600">$${model.input}</td>
+                    <td class="p-3 text-right text-slate-600">$${model.output}</td>
+                    <td class="p-3 text-slate-500">${model.bestFor}</td>
+                </tr>
+            `).join('');
+        }
+    </script>
+</body>
+</html>
