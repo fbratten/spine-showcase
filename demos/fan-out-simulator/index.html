@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - Fan-Out Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        input[type="range"] {
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .task-running { animation: pulse 0.8s ease-in-out infinite; }
+        @keyframes progress {
+            from { width: 0%; }
+            to { width: 100%; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 md:p-12">
+
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-12 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">→</span>
+                <span class="text-slate-600">Interactive Demo</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Fan-Out Simulator</h1>
+            <p class="text-lg text-slate-600">Visualize how parallel task execution works with configurable workers and task counts.</p>
+        </header>
+
+        <!-- Configuration -->
+        <section class="mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-6">Configuration</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">
+                            Number of Tasks
+                            <span id="tasks-display" class="float-right font-normal text-indigo-600">8</span>
+                        </label>
+                        <input type="range" id="tasks-slider" min="2" max="20" value="8"
+                               class="w-full" oninput="updateConfig()">
+                        <div class="flex justify-between text-xs text-slate-400 mt-1">
+                            <span>2</span>
+                            <span>20</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">
+                            Max Workers (Parallel Limit)
+                            <span id="workers-display" class="float-right font-normal text-indigo-600">3</span>
+                        </label>
+                        <input type="range" id="workers-slider" min="1" max="10" value="3"
+                               class="w-full" oninput="updateConfig()">
+                        <div class="flex justify-between text-xs text-slate-400 mt-1">
+                            <span>1 (sequential)</span>
+                            <span>10</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="random-failures" class="rounded" checked>
+                        <label for="random-failures" class="text-sm text-slate-600">Random failures (~20%)</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="random-duration" class="rounded" checked>
+                        <label for="random-duration" class="text-sm text-slate-600">Variable task duration</label>
+                    </div>
+                </div>
+
+                <button onclick="runSimulation()" id="run-btn"
+                        class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg transition">
+                    Run Simulation
+                </button>
+            </div>
+        </section>
+
+        <!-- Visualization -->
+        <section class="mb-8">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Task Execution</h2>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <!-- Worker lanes -->
+                <div id="worker-lanes" class="space-y-3 mb-6">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <!-- Task queue -->
+                <div class="border-t border-slate-200 pt-4">
+                    <div class="text-xs text-slate-500 mb-2">Task Queue</div>
+                    <div id="task-queue" class="flex flex-wrap gap-2">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results -->
+        <section class="mb-12" id="results-section" style="display: none;">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Results</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
+                    <div id="result-total" class="text-3xl font-bold text-slate-900">0</div>
+                    <div class="text-xs text-slate-500">Total Tasks</div>
+                </div>
+                <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200 text-center">
+                    <div id="result-success" class="text-3xl font-bold text-emerald-600">0</div>
+                    <div class="text-xs text-slate-500">Succeeded</div>
+                </div>
+                <div class="bg-red-50 p-4 rounded-lg border border-red-200 text-center">
+                    <div id="result-failed" class="text-3xl font-bold text-red-600">0</div>
+                    <div class="text-xs text-slate-500">Failed</div>
+                </div>
+                <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-200 text-center">
+                    <div id="result-duration" class="text-3xl font-bold text-indigo-600">0ms</div>
+                    <div class="text-xs text-slate-500">Total Duration</div>
+                </div>
+            </div>
+
+            <!-- Comparison -->
+            <div class="mt-6 bg-slate-100 p-4 rounded-lg">
+                <div class="text-sm font-bold text-slate-700 mb-2">Efficiency Comparison</div>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-slate-500">Sequential (1 worker):</span>
+                        <span id="sequential-time" class="font-bold text-slate-700 ml-2">0ms</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">Your config:</span>
+                        <span id="parallel-time" class="font-bold text-indigo-600 ml-2">0ms</span>
+                        <span id="speedup" class="text-emerald-600 text-xs ml-2"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="bg-indigo-50 rounded-xl p-6 border border-indigo-100 mb-12">
+            <h3 class="font-bold text-indigo-900 text-sm uppercase tracking-wide mb-4">How Fan-Out Works</h3>
+            <div class="text-sm text-indigo-700 space-y-3">
+                <p>
+                    <strong>Fan-out</strong> distributes independent tasks across multiple workers for parallel execution.
+                    Each worker processes one task at a time from the queue.
+                </p>
+                <div class="bg-white/50 p-3 rounded font-mono text-xs">
+                    tasks = [task1, task2, ..., taskN]<br>
+                    results = fan_out(tasks, max_workers=3)<br>
+                    # Tasks run in parallel, results aggregated
+                </div>
+                <p>
+                    The <code class="bg-white/50 px-1 rounded">max_workers</code> parameter limits concurrency.
+                    More workers = faster completion (up to the task count), but higher resource usage.
+                </p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                ← Back to SPINE Demos
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+    <script>
+        let isRunning = false;
+        let tasks = [];
+        let workers = [];
+        let completedTasks = { success: 0, failed: 0 };
+        let startTime = 0;
+
+        function updateConfig() {
+            document.getElementById('tasks-display').textContent = document.getElementById('tasks-slider').value;
+            document.getElementById('workers-display').textContent = document.getElementById('workers-slider').value;
+            initializeVisualization();
+        }
+
+        function initializeVisualization() {
+            const numTasks = parseInt(document.getElementById('tasks-slider').value);
+            const numWorkers = parseInt(document.getElementById('workers-slider').value);
+
+            // Create worker lanes
+            const lanesContainer = document.getElementById('worker-lanes');
+            lanesContainer.innerHTML = Array.from({ length: numWorkers }, (_, i) => `
+                <div class="flex items-center gap-3">
+                    <div class="w-20 text-xs text-slate-500 font-medium">Worker ${i + 1}</div>
+                    <div id="worker-${i}" class="flex-1 h-10 bg-slate-100 rounded-lg relative overflow-hidden">
+                        <div class="absolute inset-0 flex items-center justify-center text-xs text-slate-400">
+                            Idle
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Create task queue
+            const queueContainer = document.getElementById('task-queue');
+            queueContainer.innerHTML = Array.from({ length: numTasks }, (_, i) => `
+                <div id="task-${i}" class="w-8 h-8 bg-slate-200 rounded flex items-center justify-center text-xs font-bold text-slate-600">
+                    ${i + 1}
+                </div>
+            `).join('');
+
+            // Reset results
+            document.getElementById('results-section').style.display = 'none';
+        }
+
+        async function runSimulation() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const numTasks = parseInt(document.getElementById('tasks-slider').value);
+            const numWorkers = parseInt(document.getElementById('workers-slider').value);
+            const randomFailures = document.getElementById('random-failures').checked;
+            const randomDuration = document.getElementById('random-duration').checked;
+
+            // Reset state
+            completedTasks = { success: 0, failed: 0 };
+            initializeVisualization();
+
+            // Update button
+            const btn = document.getElementById('run-btn');
+            btn.textContent = 'Running...';
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            // Create task queue
+            const taskQueue = Array.from({ length: numTasks }, (_, i) => ({
+                id: i,
+                duration: randomDuration ? 500 + Math.random() * 1500 : 1000,
+                willFail: randomFailures && Math.random() < 0.2
+            }));
+
+            // Track total durations for comparison
+            const totalSequentialTime = taskQueue.reduce((sum, t) => sum + t.duration, 0);
+            let taskDurations = [];
+
+            startTime = Date.now();
+
+            // Create worker promises
+            const workerPromises = Array.from({ length: numWorkers }, (_, workerId) =>
+                processWorker(workerId, taskQueue, taskDurations)
+            );
+
+            await Promise.all(workerPromises);
+
+            const totalTime = Date.now() - startTime;
+
+            // Show results
+            showResults(numTasks, totalTime, totalSequentialTime);
+
+            // Reset button
+            btn.textContent = 'Run Simulation';
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+            isRunning = false;
+        }
+
+        async function processWorker(workerId, taskQueue, taskDurations) {
+            const workerEl = document.getElementById(`worker-${workerId}`);
+
+            while (taskQueue.length > 0) {
+                const task = taskQueue.shift();
+                if (!task) break;
+
+                const taskEl = document.getElementById(`task-${task.id}`);
+
+                // Update task in queue
+                taskEl.classList.remove('bg-slate-200');
+                taskEl.classList.add('bg-indigo-500', 'text-white');
+
+                // Show task in worker
+                workerEl.innerHTML = `
+                    <div class="absolute inset-0 bg-indigo-100 task-running"></div>
+                    <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-indigo-700 z-10">
+                        Task ${task.id + 1}
+                    </div>
+                    <div class="absolute bottom-0 left-0 h-1 bg-indigo-500" style="animation: progress ${task.duration}ms linear forwards"></div>
+                `;
+
+                // Simulate work
+                await sleep(task.duration);
+                taskDurations.push(task.duration);
+
+                // Complete task
+                if (task.willFail) {
+                    taskEl.classList.remove('bg-indigo-500');
+                    taskEl.classList.add('bg-red-500');
+                    completedTasks.failed++;
+                } else {
+                    taskEl.classList.remove('bg-indigo-500');
+                    taskEl.classList.add('bg-emerald-500');
+                    completedTasks.success++;
+                }
+
+                // Reset worker
+                workerEl.innerHTML = `
+                    <div class="absolute inset-0 flex items-center justify-center text-xs text-slate-400">
+                        Idle
+                    </div>
+                `;
+            }
+        }
+
+        function showResults(total, parallelTime, sequentialTime) {
+            document.getElementById('results-section').style.display = 'block';
+            document.getElementById('result-total').textContent = total;
+            document.getElementById('result-success').textContent = completedTasks.success;
+            document.getElementById('result-failed').textContent = completedTasks.failed;
+            document.getElementById('result-duration').textContent = parallelTime + 'ms';
+
+            document.getElementById('sequential-time').textContent = Math.round(sequentialTime) + 'ms';
+            document.getElementById('parallel-time').textContent = parallelTime + 'ms';
+
+            const speedup = sequentialTime / parallelTime;
+            if (speedup > 1.1) {
+                document.getElementById('speedup').textContent = `(${speedup.toFixed(1)}x faster)`;
+            } else {
+                document.getElementById('speedup').textContent = '';
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', initializeVisualization);
+    </script>
+</body>
+</html>

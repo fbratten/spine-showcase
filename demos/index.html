@@ -30,7 +30,7 @@
         <!-- Demo Grid -->
         <section class="mb-16">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
+
                 <!-- Tier Classifier -->
                 <a href="tier-classifier/" class="block bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition group">
                     <div class="flex items-center gap-3 mb-3">
@@ -50,6 +50,82 @@
                     </div>
                 </a>
 
+                <!-- Provider Picker -->
+                <a href="provider-picker/" class="block bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition group">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-violet-500 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
+                            🤖
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-slate-900 group-hover:text-indigo-600 transition">LLM Provider Picker</h3>
+                            <span class="text-xs text-slate-400">Interactive</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Choose the right LLM provider based on your task type. Compare pricing and capabilities.
+                    </p>
+                    <div class="mt-4 text-indigo-600 text-sm font-medium group-hover:underline">
+                        Try it →
+                    </div>
+                </a>
+
+                <!-- Cost Calculator -->
+                <a href="cost-calculator/" class="block bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition group">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-emerald-500 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
+                            💰
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-slate-900 group-hover:text-indigo-600 transition">LLM Cost Calculator</h3>
+                            <span class="text-xs text-slate-400">Interactive</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Estimate API costs by model and token usage with real-time calculation and batch estimates.
+                    </p>
+                    <div class="mt-4 text-indigo-600 text-sm font-medium group-hover:underline">
+                        Try it →
+                    </div>
+                </a>
+
+                <!-- Fan-Out Simulator -->
+                <a href="fan-out-simulator/" class="block bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition group">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-blue-500 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
+                            ⚡
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-slate-900 group-hover:text-indigo-600 transition">Fan-Out Simulator</h3>
+                            <span class="text-xs text-slate-400">Interactive</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Visualize parallel task execution with configurable workers. Watch tasks process in real-time.
+                    </p>
+                    <div class="mt-4 text-indigo-600 text-sm font-medium group-hover:underline">
+                        Try it →
+                    </div>
+                </a>
+
+                <!-- Pipeline Builder -->
+                <a href="pipeline-builder/" class="block bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition group">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-orange-500 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
+                            🔗
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-slate-900 group-hover:text-indigo-600 transition">Pipeline Builder</h3>
+                            <span class="text-xs text-slate-400">Interactive</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Build and visualize sequential processing chains. Watch data flow through each step.
+                    </p>
+                    <div class="mt-4 text-indigo-600 text-sm font-medium group-hover:underline">
+                        Try it →
+                    </div>
+                </a>
+
                 <!-- Coming Soon: Context Stack Builder -->
                 <div class="block bg-slate-100 p-6 rounded-xl border border-slate-200 opacity-60">
                     <div class="flex items-center gap-3 mb-3">
@@ -63,38 +139,6 @@
                     </div>
                     <p class="text-sm text-slate-500 leading-relaxed">
                         Build and visualize SPINE context stacks interactively.
-                    </p>
-                </div>
-
-                <!-- Coming Soon: Pattern Visualizer -->
-                <div class="block bg-slate-100 p-6 rounded-xl border border-slate-200 opacity-60">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-slate-400 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
-                            🔄
-                        </span>
-                        <div>
-                            <h3 class="font-bold text-slate-500">Pattern Visualizer</h3>
-                            <span class="text-xs text-slate-400">Coming Soon</span>
-                        </div>
-                    </div>
-                    <p class="text-sm text-slate-500 leading-relaxed">
-                        Visualize fan-out and pipeline patterns with animated diagrams.
-                    </p>
-                </div>
-
-                <!-- Coming Soon: Cost Calculator -->
-                <div class="block bg-slate-100 p-6 rounded-xl border border-slate-200 opacity-60">
-                    <div class="flex items-center gap-3 mb-3">
-                        <span class="bg-slate-400 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
-                            💰
-                        </span>
-                        <div>
-                            <h3 class="font-bold text-slate-500">Cost Calculator</h3>
-                            <span class="text-xs text-slate-400">Coming Soon</span>
-                        </div>
-                    </div>
-                    <p class="text-sm text-slate-500 leading-relaxed">
-                        Estimate token costs for different orchestration strategies.
                     </p>
                 </div>
 

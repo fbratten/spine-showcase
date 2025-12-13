@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - Pipeline Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        @keyframes flow {
+            0% { transform: translateX(-100%); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateX(100%); opacity: 0; }
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+        }
+        .step-active { animation: pulse 1s ease-in-out infinite; }
+        .data-flow {
+            animation: flow 0.5s ease-in-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 md:p-12">
+
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-12 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">→</span>
+                <span class="text-slate-600">Interactive Demo</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Pipeline Builder</h1>
+            <p class="text-lg text-slate-600">Build and visualize sequential processing chains. Watch data flow through each step.</p>
+        </header>
+
+        <!-- Pipeline Builder -->
+        <section class="mb-8">
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide">Pipeline Steps</h2>
+                    <button onclick="addStep()" class="text-sm bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-3 py-1 rounded transition">
+                        + Add Step
+                    </button>
+                </div>
+
+                <!-- Steps List -->
+                <div id="steps-container" class="space-y-3 mb-6">
+                    <!-- Dynamically populated -->
+                </div>
+
+                <!-- Options -->
+                <div class="flex items-center gap-6 mb-6 pt-4 border-t border-slate-200">
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="continue-on-failure" class="rounded">
+                        <label for="continue-on-failure" class="text-sm text-slate-600">Continue on failure</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="show-intermediate" class="rounded" checked>
+                        <label for="show-intermediate" class="text-sm text-slate-600">Show intermediate outputs</label>
+                    </div>
+                </div>
+
+                <button onclick="runPipeline()" id="run-btn"
+                        class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg transition">
+                    Run Pipeline
+                </button>
+            </div>
+        </section>
+
+        <!-- Visual Flow -->
+        <section class="mb-8">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Pipeline Flow</h2>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 overflow-x-auto">
+                <div id="flow-visualization" class="flex items-center gap-2 min-w-max">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Output Log -->
+        <section class="mb-8" id="output-section" style="display: none;">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Execution Log</h2>
+            <div class="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-sm overflow-x-auto">
+                <div id="output-log">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Preset Pipelines -->
+        <section class="mb-12">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Try a Preset Pipeline</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="loadPreset('dataProcessing')" class="text-left bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:border-indigo-300 transition">
+                    <div class="font-bold text-slate-900 mb-1">Data Processing</div>
+                    <div class="text-xs text-slate-500">Fetch → Parse → Transform → Validate</div>
+                </button>
+                <button onclick="loadPreset('textAnalysis')" class="text-left bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:border-indigo-300 transition">
+                    <div class="font-bold text-slate-900 mb-1">Text Analysis</div>
+                    <div class="text-xs text-slate-500">Extract → Summarize → Classify</div>
+                </button>
+                <button onclick="loadPreset('deployment')" class="text-left bg-white p-4 rounded-lg shadow-sm border border-slate-200 hover:border-indigo-300 transition">
+                    <div class="font-bold text-slate-900 mb-1">Deployment</div>
+                    <div class="text-xs text-slate-500">Build → Test → Deploy → Notify</div>
+                </button>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="bg-indigo-50 rounded-xl p-6 border border-indigo-100 mb-12">
+            <h3 class="font-bold text-indigo-900 text-sm uppercase tracking-wide mb-4">How Pipelines Work</h3>
+            <div class="text-sm text-indigo-700 space-y-3">
+                <p>
+                    <strong>Pipelines</strong> chain steps sequentially, passing each step's output as the next step's input.
+                    If any step fails, the pipeline stops (unless <code class="bg-white/50 px-1 rounded">continue_on_failure</code> is set).
+                </p>
+                <div class="bg-white/50 p-3 rounded font-mono text-xs">
+                    pipeline = Pipeline([<br>
+                    &nbsp;&nbsp;Step("fetch", fetch_data),<br>
+                    &nbsp;&nbsp;Step("parse", parse_json),<br>
+                    &nbsp;&nbsp;Step("transform", apply_rules),<br>
+                    ])<br>
+                    result = pipeline.run(initial_input)
+                </div>
+                <p>
+                    Each step receives the previous step's output. This enables modular, composable processing chains.
+                </p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                ← Back to SPINE Demos
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+    <script>
+        let steps = [
+            { id: 1, name: 'Fetch', transform: 'fetch_data', failChance: 0.1 },
+            { id: 2, name: 'Parse', transform: 'parse_json', failChance: 0.05 },
+            { id: 3, name: 'Transform', transform: 'apply_rules', failChance: 0.1 }
+        ];
+        let nextId = 4;
+        let isRunning = false;
+
+        const presets = {
+            dataProcessing: [
+                { name: 'Fetch', transform: 'fetch_data', failChance: 0.1 },
+                { name: 'Parse', transform: 'parse_json', failChance: 0.05 },
+                { name: 'Transform', transform: 'apply_rules', failChance: 0.1 },
+                { name: 'Validate', transform: 'validate_schema', failChance: 0.15 }
+            ],
+            textAnalysis: [
+                { name: 'Extract', transform: 'extract_text', failChance: 0.05 },
+                { name: 'Summarize', transform: 'summarize_content', failChance: 0.1 },
+                { name: 'Classify', transform: 'classify_topic', failChance: 0.1 }
+            ],
+            deployment: [
+                { name: 'Build', transform: 'build_artifacts', failChance: 0.15 },
+                { name: 'Test', transform: 'run_tests', failChance: 0.2 },
+                { name: 'Deploy', transform: 'deploy_to_prod', failChance: 0.1 },
+                { name: 'Notify', transform: 'send_notification', failChance: 0.05 }
+            ]
+        };
+
+        function loadPreset(presetName) {
+            const preset = presets[presetName];
+            steps = preset.map((step, i) => ({
+                id: i + 1,
+                ...step
+            }));
+            nextId = steps.length + 1;
+            renderSteps();
+            renderFlow();
+            document.getElementById('output-section').style.display = 'none';
+        }
+
+        function renderSteps() {
+            const container = document.getElementById('steps-container');
+            container.innerHTML = steps.map((step, index) => `
+                <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-lg" id="step-row-${step.id}">
+                    <span class="text-slate-400 text-sm font-mono w-6">${index + 1}.</span>
+                    <input type="text" value="${step.name}" onchange="updateStepName(${step.id}, this.value)"
+                           class="flex-1 px-3 py-2 border border-slate-200 rounded text-sm focus:outline-none focus:border-indigo-500">
+                    <span class="text-xs text-slate-400 font-mono hidden md:inline">${step.transform}()</span>
+                    <button onclick="removeStep(${step.id})" class="text-red-400 hover:text-red-600 text-sm px-2">
+                        ×
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function renderFlow() {
+            const container = document.getElementById('flow-visualization');
+            container.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <div class="bg-slate-200 text-slate-600 px-3 py-2 rounded text-xs font-bold">
+                        INPUT
+                    </div>
+                    ${steps.map((step, i) => `
+                        <div class="text-slate-300">→</div>
+                        <div id="flow-step-${step.id}" class="relative bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg text-sm font-medium">
+                            ${step.name}
+                            <div id="flow-status-${step.id}" class="absolute -top-2 -right-2 w-5 h-5 rounded-full hidden items-center justify-center text-xs"></div>
+                        </div>
+                    `).join('')}
+                    <div class="text-slate-300">→</div>
+                    <div id="flow-output" class="bg-slate-200 text-slate-600 px-3 py-2 rounded text-xs font-bold">
+                        OUTPUT
+                    </div>
+                </div>
+            `;
+        }
+
+        function addStep() {
+            steps.push({
+                id: nextId,
+                name: `Step ${nextId}`,
+                transform: `process_${nextId}`,
+                failChance: 0.1
+            });
+            nextId++;
+            renderSteps();
+            renderFlow();
+        }
+
+        function removeStep(id) {
+            if (steps.length <= 1) return;
+            steps = steps.filter(s => s.id !== id);
+            renderSteps();
+            renderFlow();
+        }
+
+        function updateStepName(id, name) {
+            const step = steps.find(s => s.id === id);
+            if (step) {
+                step.name = name;
+                renderFlow();
+            }
+        }
+
+        async function runPipeline() {
+            if (isRunning) return;
+            isRunning = true;
+
+            const continueOnFailure = document.getElementById('continue-on-failure').checked;
+            const showIntermediate = document.getElementById('show-intermediate').checked;
+
+            // Reset UI
+            const btn = document.getElementById('run-btn');
+            btn.textContent = 'Running...';
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            document.getElementById('output-section').style.display = 'block';
+            const log = document.getElementById('output-log');
+            log.innerHTML = '';
+
+            // Reset flow visualization
+            steps.forEach(step => {
+                const el = document.getElementById(`flow-step-${step.id}`);
+                el.classList.remove('bg-emerald-100', 'text-emerald-700', 'bg-red-100', 'text-red-700', 'step-active');
+                el.classList.add('bg-indigo-100', 'text-indigo-700');
+                document.getElementById(`flow-status-${step.id}`).classList.add('hidden');
+            });
+
+            // Simulate initial input
+            let currentData = { type: 'raw', content: 'initial_data', size: 1024 };
+            addLog(log, `Starting pipeline with ${steps.length} steps...`, 'info');
+            addLog(log, `Input: ${JSON.stringify(currentData)}`, 'data');
+
+            let failed = false;
+
+            for (let i = 0; i < steps.length; i++) {
+                const step = steps[i];
+                const flowEl = document.getElementById(`flow-step-${step.id}`);
+                const statusEl = document.getElementById(`flow-status-${step.id}`);
+
+                // Highlight current step
+                flowEl.classList.add('step-active');
+                addLog(log, `\n[${i + 1}/${steps.length}] Running "${step.name}"...`, 'step');
+
+                // Simulate processing
+                await sleep(800 + Math.random() * 400);
+
+                // Determine success/failure
+                const willFail = Math.random() < step.failChance;
+
+                flowEl.classList.remove('step-active', 'bg-indigo-100', 'text-indigo-700');
+
+                if (willFail) {
+                    flowEl.classList.add('bg-red-100', 'text-red-700');
+                    statusEl.classList.remove('hidden');
+                    statusEl.classList.add('flex', 'bg-red-500', 'text-white');
+                    statusEl.textContent = '✗';
+
+                    addLog(log, `Error in "${step.name}": Simulated failure`, 'error');
+
+                    if (!continueOnFailure) {
+                        addLog(log, `Pipeline stopped (continue_on_failure=false)`, 'error');
+                        failed = true;
+                        break;
+                    } else {
+                        addLog(log, `Continuing despite error (continue_on_failure=true)`, 'warn');
+                    }
+                } else {
+                    flowEl.classList.add('bg-emerald-100', 'text-emerald-700');
+                    statusEl.classList.remove('hidden');
+                    statusEl.classList.add('flex', 'bg-emerald-500', 'text-white');
+                    statusEl.textContent = '✓';
+
+                    // Transform data
+                    currentData = transformData(currentData, step);
+
+                    if (showIntermediate) {
+                        addLog(log, `Output: ${JSON.stringify(currentData)}`, 'data');
+                    }
+                    addLog(log, `"${step.name}" completed successfully`, 'success');
+                }
+            }
+
+            // Final output
+            const outputEl = document.getElementById('flow-output');
+            if (!failed) {
+                outputEl.classList.remove('bg-slate-200', 'text-slate-600');
+                outputEl.classList.add('bg-emerald-500', 'text-white');
+                addLog(log, `\nPipeline completed successfully!`, 'success');
+                addLog(log, `Final output: ${JSON.stringify(currentData)}`, 'data');
+            } else {
+                outputEl.classList.remove('bg-slate-200', 'text-slate-600');
+                outputEl.classList.add('bg-red-500', 'text-white');
+            }
+
+            // Reset button
+            btn.textContent = 'Run Pipeline';
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+            isRunning = false;
+        }
+
+        function transformData(data, step) {
+            // Simulate data transformation
+            return {
+                ...data,
+                [`${step.transform}_applied`]: true,
+                size: Math.floor(data.size * (0.8 + Math.random() * 0.4)),
+                lastStep: step.name
+            };
+        }
+
+        function addLog(container, message, type) {
+            const colors = {
+                info: 'text-slate-400',
+                step: 'text-indigo-400',
+                success: 'text-emerald-400',
+                error: 'text-red-400',
+                warn: 'text-yellow-400',
+                data: 'text-slate-500'
+            };
+            const line = document.createElement('div');
+            line.className = colors[type] || 'text-slate-300';
+            line.textContent = message;
+            container.appendChild(line);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSteps();
+            renderFlow();
+        });
+    </script>
+</body>
+</html>

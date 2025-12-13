@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - LLM Provider Picker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 md:p-12">
+
+    <div class="max-w-4xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-12 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">→</span>
+                <span class="text-slate-600">Interactive Demo</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">LLM Provider Picker</h1>
+            <p class="text-lg text-slate-600">Choose the right LLM provider based on your task type. Each provider excels at different capabilities.</p>
+        </header>
+
+        <!-- The Picker Tool -->
+        <section class="mb-16">
+            <h2 class="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider text-sm">What's Your Task?</h2>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                    <!-- Planning -->
+                    <button onclick="selectTask('planning')" id="btn-planning" class="task-btn text-left p-5 rounded-lg border-2 border-slate-200 hover:border-violet-500 transition">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-2xl">🧠</span>
+                            <span class="font-bold text-slate-900">Planning & Coordination</span>
+                        </div>
+                        <p class="text-sm text-slate-600">Long-horizon planning, task decomposition, agentic workflows, multi-step reasoning</p>
+                    </button>
+
+                    <!-- Execution -->
+                    <button onclick="selectTask('execution')" id="btn-execution" class="task-btn text-left p-5 rounded-lg border-2 border-slate-200 hover:border-blue-500 transition">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-2xl">⚡</span>
+                            <span class="font-bold text-slate-900">Code Execution</span>
+                        </div>
+                        <p class="text-sm text-slate-600">Shell commands, code modifications, apply patches, automation tasks</p>
+                    </button>
+
+                    <!-- Multimodal -->
+                    <button onclick="selectTask('multimodal')" id="btn-multimodal" class="task-btn text-left p-5 rounded-lg border-2 border-slate-200 hover:border-emerald-500 transition">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-2xl">🖼️</span>
+                            <span class="font-bold text-slate-900">Multimodal & Resources</span>
+                        </div>
+                        <p class="text-sm text-slate-600">Images, PDFs, diagrams, non-textual data, MCP resource handling</p>
+                    </button>
+
+                    <!-- Discovery -->
+                    <button onclick="selectTask('discovery')" id="btn-discovery" class="task-btn text-left p-5 rounded-lg border-2 border-slate-200 hover:border-orange-500 transition">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="text-2xl">🔍</span>
+                            <span class="font-bold text-slate-900">Real-time Discovery</span>
+                        </div>
+                        <p class="text-sm text-slate-600">Live events, social data, current information, real-time feeds</p>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Result Panel (hidden initially) -->
+        <section id="result-panel" class="mb-16 hidden">
+            <h2 class="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider text-sm">Recommended Provider</h2>
+
+            <div id="result-content" class="rounded-xl shadow-sm border overflow-hidden">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- Provider Reference -->
+        <section class="mb-12">
+            <h2 class="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider text-sm">Provider Comparison</h2>
+
+            <div class="overflow-x-auto">
+                <table class="w-full bg-white rounded-lg shadow-sm border border-slate-200">
+                    <thead>
+                        <tr class="border-b border-slate-200">
+                            <th class="text-left p-4 font-bold text-slate-900">Provider</th>
+                            <th class="text-left p-4 font-bold text-slate-900">Best For</th>
+                            <th class="text-left p-4 font-bold text-slate-900">Model</th>
+                            <th class="text-right p-4 font-bold text-slate-900">Price (per 1M)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-slate-100">
+                            <td class="p-4">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-violet-500"></span>
+                                    <span class="font-semibold">Anthropic</span>
+                                </span>
+                            </td>
+                            <td class="p-4 text-slate-600">Planning atoms</td>
+                            <td class="p-4"><code class="text-xs bg-slate-100 px-2 py-1 rounded">claude-opus-4-5</code></td>
+                            <td class="p-4 text-right text-slate-600">$5 / $25</td>
+                        </tr>
+                        <tr class="border-b border-slate-100">
+                            <td class="p-4">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                                    <span class="font-semibold">OpenAI</span>
+                                </span>
+                            </td>
+                            <td class="p-4 text-slate-600">Execution atoms</td>
+                            <td class="p-4"><code class="text-xs bg-slate-100 px-2 py-1 rounded">gpt-5.1</code></td>
+                            <td class="p-4 text-right text-slate-600">$5 / $15</td>
+                        </tr>
+                        <tr class="border-b border-slate-100">
+                            <td class="p-4">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                                    <span class="font-semibold">Google</span>
+                                </span>
+                            </td>
+                            <td class="p-4 text-slate-600">MCP resources</td>
+                            <td class="p-4"><code class="text-xs bg-slate-100 px-2 py-1 rounded">gemini-3-pro</code></td>
+                            <td class="p-4 text-right text-slate-600">$2 / $8</td>
+                        </tr>
+                        <tr>
+                            <td class="p-4">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                                    <span class="font-semibold">xAI</span>
+                                </span>
+                            </td>
+                            <td class="p-4 text-slate-600">Discovery atoms</td>
+                            <td class="p-4"><code class="text-xs bg-slate-100 px-2 py-1 rounded">grok-4.1</code></td>
+                            <td class="p-4 text-right text-slate-600">$3 / $12</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">Prices: input / output per 1M tokens (Nov 2025 reference)</p>
+        </section>
+
+        <!-- Model Tiers -->
+        <section class="bg-indigo-50 rounded-xl p-6 border border-indigo-100 mb-12">
+            <h3 class="font-bold text-indigo-900 text-sm uppercase tracking-wide mb-4">Model Tiers by Provider</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                <div>
+                    <span class="block font-bold text-indigo-700 mb-2">Anthropic Claude</span>
+                    <div class="space-y-1 text-indigo-600 text-xs">
+                        <div>Opus 4.5 - Flagship (planning)</div>
+                        <div>Sonnet 4.5 - Balanced</div>
+                        <div>Haiku 4 - Fast</div>
+                    </div>
+                </div>
+                <div>
+                    <span class="block font-bold text-indigo-700 mb-2">OpenAI GPT-5</span>
+                    <div class="space-y-1 text-indigo-600 text-xs">
+                        <div>GPT-5.1 - Latest flagship</div>
+                        <div>GPT-5.1-mini - Fast</div>
+                        <div>GPT-5-nano - Smallest</div>
+                    </div>
+                </div>
+                <div>
+                    <span class="block font-bold text-indigo-700 mb-2">Google Gemini 3</span>
+                    <div class="space-y-1 text-indigo-600 text-xs">
+                        <div>Gemini 3 Pro - Multimodal flagship</div>
+                        <div>Gemini 3 Flash - Fast</div>
+                        <div>Veo 3.1 - Video generation</div>
+                    </div>
+                </div>
+                <div>
+                    <span class="block font-bold text-indigo-700 mb-2">xAI Grok</span>
+                    <div class="space-y-1 text-indigo-600 text-xs">
+                        <div>Grok 4.1 - Real-time flagship</div>
+                        <div>Grok 4 - Previous version</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                ← Back to SPINE Demos
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+    <script>
+        const providers = {
+            planning: {
+                name: 'Anthropic',
+                color: 'violet',
+                model: 'claude-opus-4-5',
+                description: 'Best for long-horizon planning, task decomposition, and agentic coordination workflows.',
+                strengths: ['Multi-step reasoning', 'Task decomposition', 'Agentic workflows', 'Context handling'],
+                price: { input: 5.0, output: 25.0 },
+                alternatives: [
+                    { name: 'Sonnet 4.5', price: '$3/$15', note: 'Balanced option' },
+                    { name: 'Haiku 4', price: '$0.25/$1.25', note: 'Fast, cheaper' }
+                ]
+            },
+            execution: {
+                name: 'OpenAI',
+                color: 'blue',
+                model: 'gpt-5.1',
+                description: 'Best for code execution, shell commands, and automation tasks.',
+                strengths: ['Code generation', 'Shell commands', 'Patch application', 'Automation'],
+                price: { input: 5.0, output: 15.0 },
+                alternatives: [
+                    { name: 'GPT-5.1-mini', price: '$0.4/$1.6', note: 'Fast execution' },
+                    { name: 'GPT-5-nano', price: '$0.1/$0.4', note: 'Smallest, cheapest' }
+                ]
+            },
+            multimodal: {
+                name: 'Google',
+                color: 'emerald',
+                model: 'gemini-3-pro',
+                description: 'Best for multimodal reasoning, images, PDFs, and MCP resource handling.',
+                strengths: ['Image understanding', 'PDF analysis', 'Diagram parsing', 'Non-textual data'],
+                price: { input: 2.0, output: 8.0 },
+                alternatives: [
+                    { name: 'Gemini 3 Flash', price: '$0.15/$0.6', note: 'Fast multimodal' },
+                    { name: 'Veo 3.1', price: '$0.5/$2', note: 'Video generation' }
+                ]
+            },
+            discovery: {
+                name: 'xAI',
+                color: 'orange',
+                model: 'grok-4.1',
+                description: 'Best for real-time data, social fluency, and live event handling.',
+                strengths: ['Real-time data', 'Social context', 'Live events', 'Current information'],
+                price: { input: 3.0, output: 12.0 },
+                alternatives: [
+                    { name: 'Grok 4', price: '$2.5/$10', note: 'Previous version' }
+                ]
+            }
+        };
+
+        let selectedTask = null;
+
+        function selectTask(task) {
+            selectedTask = task;
+
+            // Update button styles
+            document.querySelectorAll('.task-btn').forEach(btn => {
+                btn.classList.remove('border-violet-500', 'border-blue-500', 'border-emerald-500', 'border-orange-500', 'bg-violet-50', 'bg-blue-50', 'bg-emerald-50', 'bg-orange-50');
+                btn.classList.add('border-slate-200');
+            });
+
+            const colorMap = {
+                planning: 'violet',
+                execution: 'blue',
+                multimodal: 'emerald',
+                discovery: 'orange'
+            };
+
+            const selectedBtn = document.getElementById(`btn-${task}`);
+            const color = colorMap[task];
+            selectedBtn.classList.remove('border-slate-200');
+            selectedBtn.classList.add(`border-${color}-500`, `bg-${color}-50`);
+
+            displayResult(task);
+        }
+
+        function displayResult(task) {
+            const provider = providers[task];
+            const panel = document.getElementById('result-panel');
+            const content = document.getElementById('result-content');
+
+            const colorClasses = {
+                violet: { bg: 'bg-violet-500', light: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200' },
+                blue: { bg: 'bg-blue-500', light: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+                emerald: { bg: 'bg-emerald-500', light: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+                orange: { bg: 'bg-orange-500', light: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' }
+            };
+
+            const colors = colorClasses[provider.color];
+
+            content.innerHTML = `
+                <div class="${colors.bg} text-white p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-sm opacity-80 mb-1">Recommended Provider</div>
+                            <div class="text-3xl font-bold">${provider.name}</div>
+                            <div class="text-sm opacity-90 mt-1">
+                                <code class="bg-white/20 px-2 py-0.5 rounded">${provider.model}</code>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm opacity-80">Price per 1M tokens</div>
+                            <div class="text-xl font-bold">$${provider.price.input} / $${provider.price.output}</div>
+                            <div class="text-xs opacity-80">input / output</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="${colors.light} ${colors.border} border-t p-6">
+                    <p class="text-slate-700 mb-4">${provider.description}</p>
+
+                    <div class="mb-4">
+                        <h4 class="font-bold ${colors.text} mb-2">Strengths</h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${provider.strengths.map(s => `<span class="text-xs ${colors.bg} text-white px-2 py-1 rounded">${s}</span>`).join('')}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold ${colors.text} mb-2">Alternatives</h4>
+                        <div class="space-y-2">
+                            ${provider.alternatives.map(alt => `
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-slate-700">${alt.name}</span>
+                                    <span class="text-slate-500">${alt.price} <span class="text-xs">(${alt.note})</span></span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            panel.classList.remove('hidden');
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
