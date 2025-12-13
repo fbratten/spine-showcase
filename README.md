@@ -4,7 +4,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status](https://img.shields.io/badge/status-active-green)]()
-[![Demo](https://img.shields.io/badge/demo-live-blue)](demos/tier-classifier/)
+[![Live Site](https://img.shields.io/badge/site-live-blue)](https://fbratten.github.io/spine-showcase/)
+[![Demos](https://img.shields.io/badge/demos-5%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
 
 ---
 
@@ -86,7 +87,7 @@ SPINE balances capability usage against overhead costs through a **three-tier sy
 | **Over-engineering** | Simple tasks don't need orchestration |
 | **Context Fragmentation** | Subagents don't share full conversation context |
 
-**→ [Try the Interactive Tier Classifier](demos/tier-classifier/)**
+**→ [Try the Interactive Tier Classifier](https://fbratten.github.io/spine-showcase/demos/tier-classifier/)**
 
 ---
 
@@ -153,11 +154,15 @@ Every LLM call is wrapped for full traceability:
 
 ## Interactive Demos
 
+**[View all demos →](https://fbratten.github.io/spine-showcase/demos/)**
+
 | Demo | Description |
 |------|-------------|
-| **[Tier Classifier](demos/tier-classifier/)** | Determine the appropriate enforcement tier for any task |
-
-*More demos coming soon*
+| **[Tier Classifier](https://fbratten.github.io/spine-showcase/demos/tier-classifier/)** | Determine the appropriate enforcement tier for any task |
+| **[Provider Picker](https://fbratten.github.io/spine-showcase/demos/provider-picker/)** | Choose the right LLM provider based on your task type |
+| **[Cost Calculator](https://fbratten.github.io/spine-showcase/demos/cost-calculator/)** | Estimate API costs by model and token usage |
+| **[Fan-Out Simulator](https://fbratten.github.io/spine-showcase/demos/fan-out-simulator/)** | Visualize parallel task execution with configurable workers |
+| **[Pipeline Builder](https://fbratten.github.io/spine-showcase/demos/pipeline-builder/)** | Build and simulate sequential processing chains |
 
 ---
 
