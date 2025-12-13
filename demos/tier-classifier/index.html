@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - Task Tier Classifier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tier-1 { --tier-color: #10b981; }
+        .tier-2 { --tier-color: #f59e0b; }
+        .tier-3 { --tier-color: #ef4444; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 md:p-12">
+
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- Header -->
+        <header class="mb-12 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">→</span>
+                <span class="text-slate-600">Interactive Demo</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Task Tier Classifier</h1>
+            <p class="text-lg text-slate-600">Determine the appropriate enforcement tier for any development task based on SPINE's tiered protocol.</p>
+        </header>
+
+        <!-- The Classifier Tool -->
+        <section class="mb-16">
+            <h2 class="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider text-sm">Classify Your Task</h2>
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <!-- Questions -->
+                <div class="space-y-6">
+                    <!-- Q1: Files -->
+                    <div>
+                        <label class="block font-bold text-slate-900 mb-3">How many files will this task affect?</label>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="setAnswer('files', 1)" id="btn-files-1" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                1 file
+                            </button>
+                            <button onclick="setAnswer('files', 5)" id="btn-files-5" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                2-5 files
+                            </button>
+                            <button onclick="setAnswer('files', 10)" id="btn-files-10" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                6+ files
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Q2: Design Decisions -->
+                    <div>
+                        <label class="block font-bold text-slate-900 mb-3">Does this require architecture or design decisions?</label>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="setAnswer('design', false)" id="btn-design-false" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                No
+                            </button>
+                            <button onclick="setAnswer('design', true)" id="btn-design-true" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                Yes
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Q3: Task Type -->
+                    <div>
+                        <label class="block font-bold text-slate-900 mb-3">What type of task is this?</label>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="setAnswer('type', 'simple')" id="btn-type-simple" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                Bug fix / Typo
+                            </button>
+                            <button onclick="setAnswer('type', 'feature')" id="btn-type-feature" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                New feature
+                            </button>
+                            <button onclick="setAnswer('type', 'research')" id="btn-type-research" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                Research
+                            </button>
+                            <button onclick="setAnswer('type', 'ui')" id="btn-type-ui" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                UI-heavy
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Q4: Investigation -->
+                    <div>
+                        <label class="block font-bold text-slate-900 mb-3">Does this require investigation or exploration?</label>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="setAnswer('investigate', false)" id="btn-investigate-false" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                No, I know what to do
+                            </button>
+                            <button onclick="setAnswer('investigate', true)" id="btn-investigate-true" class="answer-btn px-4 py-2 rounded-lg border-2 border-slate-200 hover:border-indigo-500 transition">
+                                Yes, needs exploration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calculate Button -->
+                <div class="mt-8 pt-6 border-t border-slate-100">
+                    <button onclick="classify()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-6 rounded-lg font-bold transition shadow-sm">
+                        Classify Task
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Result Panel (hidden initially) -->
+        <section id="result-panel" class="mb-16 hidden">
+            <h2 class="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider text-sm">Classification Result</h2>
+            
+            <div id="result-content" class="rounded-xl shadow-sm border overflow-hidden">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- Tier Reference -->
+        <section class="mb-12">
+            <h2 class="text-xl font-bold text-slate-900 mb-6 uppercase tracking-wider text-sm">Tier Reference</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Tier 1 -->
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-1 rounded font-bold">TIER 1</span>
+                        <span class="text-slate-500 text-sm">Simple</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 mb-2">No Enforcement</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed mb-3">Direct implementation is acceptable. No subagent or MCP usage required.</p>
+                    <div class="text-xs text-slate-400">
+                        <strong>Examples:</strong> Typo fixes, single-file edits, adding comments
+                    </div>
+                </div>
+                
+                <!-- Tier 2 -->
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-amber-500">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="bg-amber-100 text-amber-700 text-xs px-2 py-1 rounded font-bold">TIER 2</span>
+                        <span class="text-slate-500 text-sm">Medium</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 mb-2">Recommended</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed mb-3">SHOULD use subagents and MCP. Document if skipped.</p>
+                    <div class="text-xs text-slate-400">
+                        <strong>Examples:</strong> Multi-file changes, new features, bug investigation
+                    </div>
+                </div>
+
+                <!-- Tier 3 -->
+                <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200 border-l-4 border-l-red-500">
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="bg-red-100 text-red-700 text-xs px-2 py-1 rounded font-bold">TIER 3</span>
+                        <span class="text-slate-500 text-sm">Complex</span>
+                    </div>
+                    <h3 class="font-bold text-slate-900 mb-2">Mandatory</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed mb-3">MUST use appropriate subagents and MCP servers.</p>
+                    <div class="text-xs text-slate-400">
+                        <strong>Examples:</strong> Architecture decisions, research, UI-heavy work
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Capability Layers -->
+        <section class="bg-indigo-50 rounded-xl p-6 border border-indigo-100 mb-12">
+            <h3 class="font-bold text-indigo-900 text-sm uppercase tracking-wide mb-4">SPINE's Three Capability Layers</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                    <span class="block font-bold text-indigo-700 mb-1">Layer 1: Claude Native</span>
+                    <span class="text-indigo-600 text-xs">Built-in Task tool with subagent_types (Explore, Plan, code-architect, visual-tester)</span>
+                </div>
+                <div>
+                    <span class="block font-bold text-indigo-700 mb-1">Layer 2: MCP Servers</span>
+                    <span class="text-indigo-600 text-xs">External tools via MCP protocol (browser-mcp, next-conductor, research-agent)</span>
+                </div>
+                <div>
+                    <span class="block font-bold text-indigo-700 mb-1">Layer 3: SPINE Python</span>
+                    <span class="text-indigo-600 text-xs">Custom orchestration (fan_out, pipeline, ToolEnvelope, run_scenario.py)</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                ← Back to SPINE Showcase
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+    <script>
+        // State
+        const answers = {
+            files: null,
+            design: null,
+            type: null,
+            investigate: null
+        };
+
+        function setAnswer(key, value) {
+            answers[key] = value;
+            
+            // Update button styles
+            document.querySelectorAll(`[id^="btn-${key}-"]`).forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'bg-indigo-50');
+                btn.classList.add('border-slate-200');
+            });
+            
+            const selectedBtn = document.getElementById(`btn-${key}-${value}`);
+            if (selectedBtn) {
+                selectedBtn.classList.remove('border-slate-200');
+                selectedBtn.classList.add('border-indigo-500', 'bg-indigo-50');
+            }
+        }
+
+        function classify() {
+            // Check all answers provided
+            if (Object.values(answers).some(v => v === null)) {
+                alert('Please answer all questions before classifying.');
+                return;
+            }
+
+            let tier = 1;
+            let reasons = [];
+            let capabilities = [];
+
+            // Classification logic
+            if (answers.files === 1 && !answers.design && answers.type === 'simple' && !answers.investigate) {
+                tier = 1;
+                reasons.push('Single-file, simple task with no design decisions');
+            } else if (answers.type === 'research' || answers.type === 'ui' || answers.design || answers.files >= 10) {
+                tier = 3;
+                if (answers.type === 'research') reasons.push('Research tasks require multi-source investigation');
+                if (answers.type === 'ui') reasons.push('UI-heavy tasks require visual verification');
+                if (answers.design) reasons.push('Architecture decisions need structured review');
+                if (answers.files >= 10) reasons.push('Large scope (6+ files) needs orchestration');
+                
+                // Capabilities for Tier 3
+                if (answers.type === 'research') capabilities.push('research-coordinator subagent', 'research-agent-mcp');
+                if (answers.type === 'ui') capabilities.push('visual-tester subagent', 'browser-mcp');
+                if (answers.design) capabilities.push('code-architect subagent');
+                if (answers.investigate) capabilities.push('Explore subagent');
+            } else {
+                tier = 2;
+                if (answers.files > 1) reasons.push('Multi-file changes benefit from parallel exploration');
+                if (answers.type === 'feature') reasons.push('New features should use structured workflow');
+                if (answers.investigate) reasons.push('Investigation benefits from Explore subagent');
+                
+                // Capabilities for Tier 2
+                if (answers.investigate) capabilities.push('Explore subagent');
+                if (answers.files > 1) capabilities.push('next-conductor for task tracking');
+            }
+
+            // Display result
+            displayResult(tier, reasons, capabilities);
+        }
+
+        function displayResult(tier, reasons, capabilities) {
+            const panel = document.getElementById('result-panel');
+            const content = document.getElementById('result-content');
+            
+            const tierColors = {
+                1: { bg: 'bg-emerald-500', light: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' },
+                2: { bg: 'bg-amber-500', light: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+                3: { bg: 'bg-red-500', light: 'bg-red-50', text: 'text-red-700', border: 'border-red-200' }
+            };
+            
+            const tierLabels = {
+                1: { name: 'Simple', enforcement: 'No Enforcement Required' },
+                2: { name: 'Medium', enforcement: 'Recommended (Document if Skipped)' },
+                3: { name: 'Complex', enforcement: 'Mandatory Usage Required' }
+            };
+
+            const colors = tierColors[tier];
+            const labels = tierLabels[tier];
+
+            content.innerHTML = `
+                <div class="${colors.bg} text-white p-6">
+                    <div class="flex items-center gap-4">
+                        <div class="text-5xl font-bold">${tier}</div>
+                        <div>
+                            <div class="text-2xl font-bold">Tier ${tier}: ${labels.name}</div>
+                            <div class="text-sm opacity-90">${labels.enforcement}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="${colors.light} ${colors.border} border-t p-6">
+                    <div class="mb-4">
+                        <h4 class="font-bold ${colors.text} mb-2">Why this tier?</h4>
+                        <ul class="text-sm text-slate-700 space-y-1">
+                            ${reasons.map(r => `<li>• ${r}</li>`).join('')}
+                        </ul>
+                    </div>
+                    ${capabilities.length > 0 ? `
+                    <div>
+                        <h4 class="font-bold ${colors.text} mb-2">Recommended Capabilities</h4>
+                        <div class="flex flex-wrap gap-2">
+                            ${capabilities.map(c => `<span class="text-xs ${colors.bg} text-white px-2 py-1 rounded">${c}</span>`).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            panel.classList.remove('hidden');
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
