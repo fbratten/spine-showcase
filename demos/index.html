@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - Interactive Demos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 md:p-12">
+
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- Header -->
+        <header class="mb-12 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">→</span>
+                <span class="text-slate-600">Interactive Demos</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Interactive Demos</h1>
+            <p class="text-lg text-slate-600">Explore SPINE's capabilities through hands-on demonstrations.</p>
+        </header>
+
+        <!-- Demo Grid -->
+        <section class="mb-16">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- Tier Classifier -->
+                <a href="tier-classifier/" class="block bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-indigo-300 hover:shadow-md transition group">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-indigo-500 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
+                            📊
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-slate-900 group-hover:text-indigo-600 transition">Task Tier Classifier</h3>
+                            <span class="text-xs text-slate-400">Interactive</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Determine the appropriate enforcement tier for any development task based on SPINE's tiered protocol.
+                    </p>
+                    <div class="mt-4 text-indigo-600 text-sm font-medium group-hover:underline">
+                        Try it →
+                    </div>
+                </a>
+
+                <!-- Coming Soon: Context Stack Builder -->
+                <div class="block bg-slate-100 p-6 rounded-xl border border-slate-200 opacity-60">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-slate-400 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
+                            🧱
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-slate-500">Context Stack Builder</h3>
+                            <span class="text-xs text-slate-400">Coming Soon</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-500 leading-relaxed">
+                        Build and visualize SPINE context stacks interactively.
+                    </p>
+                </div>
+
+                <!-- Coming Soon: Pattern Visualizer -->
+                <div class="block bg-slate-100 p-6 rounded-xl border border-slate-200 opacity-60">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-slate-400 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
+                            🔄
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-slate-500">Pattern Visualizer</h3>
+                            <span class="text-xs text-slate-400">Coming Soon</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-500 leading-relaxed">
+                        Visualize fan-out and pipeline patterns with animated diagrams.
+                    </p>
+                </div>
+
+                <!-- Coming Soon: Cost Calculator -->
+                <div class="block bg-slate-100 p-6 rounded-xl border border-slate-200 opacity-60">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="bg-slate-400 text-white w-10 h-10 rounded-lg flex items-center justify-center text-xl">
+                            💰
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-slate-500">Cost Calculator</h3>
+                            <span class="text-xs text-slate-400">Coming Soon</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-500 leading-relaxed">
+                        Estimate token costs for different orchestration strategies.
+                    </p>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Back Link -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                ← Back to SPINE Showcase
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+</body>
+</html>
