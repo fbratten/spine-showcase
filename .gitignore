@@ -26,3 +26,13 @@ build/
 
 # Handover docs (not part of showcase)
 HANDOVER-*.md
+
+# Claude Code
+.claude/
+
+# Backlog (internal planning)
+BACKLOG.md
+
+# Session notes
+SESSION-*.md
+NOTES-*.md
