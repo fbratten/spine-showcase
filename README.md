@@ -45,7 +45,7 @@ SPINE operates in three capability layers:
 
 Explore SPINE capabilities through interactive demonstrations:
 
-👉 [Launch Demos](demos/tier-classifier/)
+👉 [Launch Demos](demos/index.html)
 
 ## Documentation
 
