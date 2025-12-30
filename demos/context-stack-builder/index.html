@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - Context Stack Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .layer-card { transition: all 0.2s ease; }
+        .layer-card:hover { transform: translateX(4px); }
+        .layer-card.active { transform: translateX(8px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .yaml-preview { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; }
+        .stack-visual { perspective: 1000px; }
+        .stack-layer { transform-style: preserve-3d; transition: transform 0.3s ease; }
+        .stack-layer:hover { transform: translateZ(20px) scale(1.02); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-8 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">&rarr;</span>
+                <a href="../" class="text-slate-600 hover:text-indigo-600">Demos</a>
+                <span class="text-slate-400">&rarr;</span>
+                <span class="text-slate-600">Context Stack Builder</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Context Stack Builder</h1>
+            <p class="text-lg text-slate-600">Build and visualize SPINE context stacks interactively. Create reproducible AI prompts with structured layers.</p>
+        </header>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- Left Column: Stack Visualization & Editor -->
+            <div>
+                <!-- Stack Explanation -->
+                <div class="bg-gradient-to-r from-indigo-500 to-violet-600 rounded-xl p-5 text-white mb-6">
+                    <h2 class="font-bold text-lg mb-2">The 6-Layer Context Stack</h2>
+                    <p class="text-indigo-100 text-sm">Context stacks provide reproducible, structured prompts. Each layer builds on the previous, from foundational principles to specific requests.</p>
+                </div>
+
+                <!-- Visual Stack -->
+                <div class="stack-visual space-y-3 mb-6">
+                    <!-- Layer 6: INPUT (top) -->
+                    <div onclick="selectLayer('input')" id="layer-input" class="layer-card stack-layer cursor-pointer bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-rose-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-rose-500 text-white flex items-center justify-center font-bold">6</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">INPUT</div>
+                                <div class="text-xs text-slate-500">User request (changes per request)</div>
+                            </div>
+                            <span class="text-rose-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <!-- Layer 5: CONTEXT -->
+                    <div onclick="selectLayer('context')" id="layer-context" class="layer-card stack-layer cursor-pointer bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-orange-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-orange-500 text-white flex items-center justify-center font-bold">5</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">CONTEXT</div>
+                                <div class="text-xs text-slate-500">Background info & references</div>
+                            </div>
+                            <span class="text-orange-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <!-- Layer 4: CONSTRAINTS -->
+                    <div onclick="selectLayer('constraints')" id="layer-constraints" class="layer-card stack-layer cursor-pointer bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-amber-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold">4</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">CONSTRAINTS</div>
+                                <div class="text-xs text-slate-500">Tone, format, do/don't rules</div>
+                            </div>
+                            <span class="text-amber-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <!-- Layer 3: COMMAND -->
+                    <div onclick="selectLayer('command')" id="layer-command" class="layer-card stack-layer cursor-pointer bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-emerald-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-emerald-500 text-white flex items-center justify-center font-bold">3</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">COMMAND</div>
+                                <div class="text-xs text-slate-500">Task specification & success criteria</div>
+                            </div>
+                            <span class="text-emerald-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <!-- Layer 2: CHARACTER -->
+                    <div onclick="selectLayer('character')" id="layer-character" class="layer-card stack-layer cursor-pointer bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-blue-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-blue-500 text-white flex items-center justify-center font-bold">2</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">CHARACTER</div>
+                                <div class="text-xs text-slate-500">AI persona & target audience</div>
+                            </div>
+                            <span class="text-blue-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <!-- Layer 1: GLOBAL (foundation) -->
+                    <div onclick="selectLayer('global')" id="layer-global" class="layer-card stack-layer cursor-pointer bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-violet-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-violet-500 text-white flex items-center justify-center font-bold">1</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">GLOBAL</div>
+                                <div class="text-xs text-slate-500">Operator, brand, principles (the "constitution")</div>
+                            </div>
+                            <span class="text-violet-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Layer Editor -->
+                <div id="layer-editor" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div id="editor-header" class="bg-violet-500 text-white px-4 py-3">
+                        <div class="font-bold">GLOBAL Layer</div>
+                        <div class="text-xs text-violet-200">The foundational "constitution" for all interactions</div>
+                    </div>
+                    <div class="p-4">
+                        <div id="editor-content">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: YAML Preview & Actions -->
+            <div>
+                <!-- Preset Templates -->
+                <div class="mb-6">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Load Template</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="loadTemplate('code-review')" class="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg transition">Code Review</button>
+                        <button onclick="loadTemplate('research')" class="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg transition">Research</button>
+                        <button onclick="loadTemplate('content')" class="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg transition">Content Generation</button>
+                        <button onclick="loadTemplate('blank')" class="px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 rounded-lg transition">Blank</button>
+                    </div>
+                </div>
+
+                <!-- YAML Preview -->
+                <div class="bg-slate-900 rounded-xl overflow-hidden shadow-lg">
+                    <div class="flex items-center justify-between px-4 py-2 bg-slate-800">
+                        <span class="text-slate-400 text-sm font-medium">scenario.yaml</span>
+                        <button onclick="copyYaml()" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded transition">
+                            Copy YAML
+                        </button>
+                    </div>
+                    <div class="p-4 max-h-[600px] overflow-y-auto">
+                        <pre id="yaml-preview" class="yaml-preview text-slate-300 whitespace-pre-wrap"></pre>
+                    </div>
+                </div>
+
+                <!-- Export Actions -->
+                <div class="mt-4 flex gap-3">
+                    <button onclick="downloadYaml()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2.5 px-4 rounded-lg font-medium transition flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Download YAML
+                    </button>
+                    <button onclick="resetStack()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 py-2.5 px-4 rounded-lg font-medium transition">
+                        Reset
+                    </button>
+                </div>
+
+                <!-- How It Works -->
+                <div class="mt-6 bg-indigo-50 rounded-xl p-5 border border-indigo-100">
+                    <h3 class="font-bold text-indigo-900 mb-3">How Context Stacks Work</h3>
+                    <div class="text-sm text-indigo-800 space-y-2">
+                        <p><strong>Bottom-up composition:</strong> Each layer builds on the one below it. GLOBAL sets the foundation, INPUT makes the specific request.</p>
+                        <p><strong>Reproducibility:</strong> The same stack produces consistent outputs. Perfect for standardized workflows.</p>
+                        <p><strong>Separation of concerns:</strong> Change the INPUT without touching the CHARACTER. Update CONSTRAINTS without redefining the COMMAND.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                &larr; Back to Demos
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+    <script>
+        // Context Stack State
+        const stack = {
+            name: 'my-scenario',
+            provider: 'anthropic',
+            model: 'claude-sonnet-4-5-20250929',
+            global: {
+                operator: { name: 'Your Name', role: 'Developer', principles: ['quality', 'clarity', 'efficiency'] },
+                brand: 'Your Project'
+            },
+            character: {
+                speaker: 'Expert Assistant',
+                audience: 'Development team'
+            },
+            command: {
+                task: 'Analyze the provided information and give structured feedback.',
+                success: ['Clear analysis', 'Actionable recommendations', 'Prioritized findings']
+            },
+            constraints: {
+                tone: ['professional', 'constructive', 'specific'],
+                format: ['Start with summary', 'Use bullet points', 'Include examples'],
+                do: ['Explain reasoning', 'Provide alternatives'],
+                dont: ['Be vague', 'Skip important details']
+            },
+            context: {
+                background: 'Project context and relevant background information goes here.',
+                references: ['Documentation', 'Previous discussions']
+            },
+            input: {
+                user_request: 'Please analyze the following...\n\n[Your content here]'
+            }
+        };
+
+        let currentLayer = 'global';
+
+        // Layer configurations
+        const layerConfig = {
+            global: {
+                color: 'violet',
+                title: 'GLOBAL Layer',
+                description: 'The foundational "constitution" for all interactions',
+                fields: [
+                    { key: 'operator.name', label: 'Operator Name', type: 'text', placeholder: 'Your Name' },
+                    { key: 'operator.role', label: 'Operator Role', type: 'text', placeholder: 'Tech Lead' },
+                    { key: 'operator.principles', label: 'Principles (comma-separated)', type: 'text', placeholder: 'quality, security, clarity' },
+                    { key: 'brand', label: 'Brand/Project', type: 'text', placeholder: 'Your Project' }
+                ]
+            },
+            character: {
+                color: 'blue',
+                title: 'CHARACTER Layer',
+                description: 'Define the AI persona and target audience',
+                fields: [
+                    { key: 'speaker', label: 'AI Persona (Speaker)', type: 'text', placeholder: 'Senior Code Reviewer' },
+                    { key: 'audience', label: 'Target Audience', type: 'text', placeholder: 'Development team members' }
+                ]
+            },
+            command: {
+                color: 'emerald',
+                title: 'COMMAND Layer',
+                description: 'The task specification and success criteria',
+                fields: [
+                    { key: 'task', label: 'Task Description', type: 'textarea', placeholder: 'Describe what you want the AI to do...' },
+                    { key: 'success', label: 'Success Criteria (one per line)', type: 'textarea', placeholder: 'Clear analysis\nActionable recommendations' }
+                ]
+            },
+            constraints: {
+                color: 'amber',
+                title: 'CONSTRAINTS Layer',
+                description: 'Tone, format, and behavioral rules',
+                fields: [
+                    { key: 'tone', label: 'Tone (comma-separated)', type: 'text', placeholder: 'professional, constructive' },
+                    { key: 'format', label: 'Format Rules (one per line)', type: 'textarea', placeholder: 'Start with summary\nUse bullet points' },
+                    { key: 'do', label: 'Do (one per line)', type: 'textarea', placeholder: 'Explain reasoning\nProvide examples' },
+                    { key: 'dont', label: "Don't (one per line)", type: 'textarea', placeholder: 'Be vague\nSkip details' }
+                ]
+            },
+            context: {
+                color: 'orange',
+                title: 'CONTEXT Layer',
+                description: 'Background information and references',
+                fields: [
+                    { key: 'background', label: 'Background', type: 'textarea', placeholder: 'Project context, relevant history...' },
+                    { key: 'references', label: 'References (one per line)', type: 'textarea', placeholder: 'Documentation\nPrevious discussions' }
+                ]
+            },
+            input: {
+                color: 'rose',
+                title: 'INPUT Layer',
+                description: 'The actual user request (changes per use)',
+                fields: [
+                    { key: 'user_request', label: 'User Request', type: 'textarea', placeholder: 'Please analyze the following...' }
+                ]
+            }
+        };
+
+        // Templates
+        const templates = {
+            'code-review': {
+                name: 'code-review',
+                global: { operator: { name: 'Tech Lead', role: 'Senior Developer', principles: ['security-first', 'maintainability', 'pragmatic-solutions'] }, brand: 'Engineering Team' },
+                character: { speaker: 'Senior Code Reviewer', audience: 'Development team members' },
+                command: { task: 'Review the provided code changes for quality, security, and adherence to best practices. Provide actionable feedback.', success: ['Overall assessment (approve/request changes)', 'Security issues identified', 'Code quality observations', 'Specific improvement suggestions'] },
+                constraints: { tone: ['constructive', 'specific', 'educational'], format: ['Start with overall verdict', 'Group by category', 'Use severity levels'], do: ['Explain WHY something is an issue', 'Provide concrete fixes', 'Acknowledge good practices'], dont: ['Be nitpicky about style', 'Suggest rewrites without justification'] },
+                context: { background: 'Project: MyApp\nLanguage: Python\nFramework: FastAPI\n\nCode Standards:\n- Follow PEP 8\n- All public functions need docstrings', references: ['Project coding standards', 'Security checklist'] },
+                input: { user_request: 'Please review the following code changes:\n\n```python\n# Your code here\n```' }
+            },
+            'research': {
+                name: 'research-analysis',
+                global: { operator: { name: 'Researcher', role: 'Analyst', principles: ['accuracy', 'thoroughness', 'objectivity'] }, brand: 'Research Team' },
+                character: { speaker: 'Research Analyst', audience: 'Decision makers and stakeholders' },
+                command: { task: 'Research and analyze the given topic. Synthesize findings from multiple sources and provide balanced conclusions.', success: ['Comprehensive overview', 'Key findings summary', 'Source citations', 'Recommendations'] },
+                constraints: { tone: ['objective', 'analytical', 'evidence-based'], format: ['Executive summary first', 'Structured sections', 'Include citations'], do: ['Cross-reference sources', 'Note conflicting information', 'Quantify when possible'], dont: ['Present opinion as fact', 'Ignore contradictory evidence'] },
+                context: { background: 'Research context and scope definition goes here.', references: ['Academic sources', 'Industry reports'] },
+                input: { user_request: 'Please research the following topic:\n\n[Your research question here]' }
+            },
+            'content': {
+                name: 'content-generation',
+                global: { operator: { name: 'Content Manager', role: 'Editor', principles: ['clarity', 'engagement', 'brand-consistency'] }, brand: 'Marketing Team' },
+                character: { speaker: 'Content Writer', audience: 'Target customers and prospects' },
+                command: { task: 'Create engaging content that aligns with brand voice and resonates with the target audience.', success: ['On-brand messaging', 'Clear call-to-action', 'Appropriate length', 'SEO-friendly'] },
+                constraints: { tone: ['friendly', 'professional', 'persuasive'], format: ['Hook in first sentence', 'Short paragraphs', 'Include subheadings'], do: ['Use active voice', 'Include specific examples', 'End with CTA'], dont: ['Use jargon', 'Be too salesy', 'Write long paragraphs'] },
+                context: { background: 'Brand voice: Friendly, approachable, expert\nTarget audience: Tech-savvy professionals', references: ['Brand guidelines', 'Previous successful content'] },
+                input: { user_request: 'Please write content about:\n\n[Your topic here]' }
+            },
+            'blank': {
+                name: 'my-scenario',
+                global: { operator: { name: '', role: '', principles: [] }, brand: '' },
+                character: { speaker: '', audience: '' },
+                command: { task: '', success: [] },
+                constraints: { tone: [], format: [], do: [], dont: [] },
+                context: { background: '', references: [] },
+                input: { user_request: '' }
+            }
+        };
+
+        function selectLayer(layerName) {
+            currentLayer = layerName;
+
+            // Update visual selection
+            document.querySelectorAll('.layer-card').forEach(card => {
+                card.classList.remove('active', 'border-violet-500', 'border-blue-500', 'border-emerald-500', 'border-amber-500', 'border-orange-500', 'border-rose-500');
+                card.classList.add('border-slate-200');
+            });
+
+            const config = layerConfig[layerName];
+            const layerEl = document.getElementById(`layer-${layerName}`);
+            layerEl.classList.add('active', `border-${config.color}-500`);
+            layerEl.classList.remove('border-slate-200');
+
+            // Update editor header
+            const header = document.getElementById('editor-header');
+            header.className = `bg-${config.color}-500 text-white px-4 py-3`;
+            header.innerHTML = `
+                <div class="font-bold">${config.title}</div>
+                <div class="text-xs opacity-80">${config.description}</div>
+            `;
+
+            // Update editor content
+            renderEditor(layerName);
+        }
+
+        function renderEditor(layerName) {
+            const config = layerConfig[layerName];
+            const content = document.getElementById('editor-content');
+
+            let html = '<div class="space-y-4">';
+
+            config.fields.forEach(field => {
+                const value = getNestedValue(stack[layerName], field.key);
+                const displayValue = Array.isArray(value) ? value.join(field.type === 'textarea' ? '\n' : ', ') : value;
+
+                if (field.type === 'textarea') {
+                    html += `
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">${field.label}</label>
+                            <textarea
+                                onchange="updateField('${layerName}', '${field.key}', this.value, '${field.type}')"
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                rows="3"
+                                placeholder="${field.placeholder}"
+                            >${displayValue || ''}</textarea>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">${field.label}</label>
+                            <input
+                                type="text"
+                                onchange="updateField('${layerName}', '${field.key}', this.value, '${field.type}')"
+                                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                placeholder="${field.placeholder}"
+                                value="${displayValue || ''}"
+                            />
+                        </div>
+                    `;
+                }
+            });
+
+            html += '</div>';
+            content.innerHTML = html;
+        }
+
+        function getNestedValue(obj, path) {
+            return path.split('.').reduce((o, k) => (o || {})[k], obj);
+        }
+
+        function setNestedValue(obj, path, value) {
+            const keys = path.split('.');
+            const lastKey = keys.pop();
+            const target = keys.reduce((o, k) => o[k] = o[k] || {}, obj);
+            target[lastKey] = value;
+        }
+
+        function updateField(layerName, fieldKey, value, fieldType) {
+            let processedValue = value;
+
+            // Handle arrays
+            if (fieldKey === 'operator.principles' || fieldKey === 'tone' || fieldKey === 'success' ||
+                fieldKey === 'format' || fieldKey === 'do' || fieldKey === 'dont' || fieldKey === 'references') {
+                const separator = fieldType === 'textarea' ? '\n' : ',';
+                processedValue = value.split(separator).map(s => s.trim()).filter(s => s);
+            }
+
+            setNestedValue(stack[layerName], fieldKey, processedValue);
+            updateYamlPreview();
+        }
+
+        function updateYamlPreview() {
+            const yaml = generateYaml();
+            document.getElementById('yaml-preview').textContent = yaml;
+        }
+
+        function generateYaml() {
+            let yaml = `# SPINE Context Stack Scenario\n`;
+            yaml += `# Generated by Context Stack Builder\n\n`;
+            yaml += `name: ${stack.name}\n`;
+            yaml += `provider: ${stack.provider}\n`;
+            yaml += `model: ${stack.model}\n\n`;
+
+            // GLOBAL
+            yaml += `# GLOBAL LAYER - The "Constitution"\n`;
+            yaml += `global:\n`;
+            yaml += `  operator:\n`;
+            yaml += `    name: ${stack.global.operator.name || '[YOUR_NAME]'}\n`;
+            yaml += `    role: ${stack.global.operator.role || '[YOUR_ROLE]'}\n`;
+            if (stack.global.operator.principles.length > 0) {
+                yaml += `    principles:\n`;
+                stack.global.operator.principles.forEach(p => yaml += `      - ${p}\n`);
+            }
+            yaml += `  brand: ${stack.global.brand || '[YOUR_BRAND]'}\n\n`;
+
+            // CHARACTER
+            yaml += `# CHARACTER LAYER - AI Persona\n`;
+            yaml += `character:\n`;
+            yaml += `  speaker: ${stack.character.speaker || '[AI_PERSONA]'}\n`;
+            yaml += `  audience: ${stack.character.audience || '[TARGET_AUDIENCE]'}\n\n`;
+
+            // COMMAND
+            yaml += `# COMMAND LAYER - The Task\n`;
+            yaml += `command:\n`;
+            yaml += `  task: |\n`;
+            (stack.command.task || '[TASK_DESCRIPTION]').split('\n').forEach(line => {
+                yaml += `    ${line}\n`;
+            });
+            if (stack.command.success.length > 0) {
+                yaml += `  success:\n`;
+                stack.command.success.forEach(s => yaml += `    - ${s}\n`);
+            }
+            yaml += `\n`;
+
+            // CONSTRAINTS
+            yaml += `# CONSTRAINTS LAYER - Rules of Engagement\n`;
+            yaml += `constraints:\n`;
+            if (stack.constraints.tone.length > 0) {
+                yaml += `  tone:\n`;
+                stack.constraints.tone.forEach(t => yaml += `    - ${t}\n`);
+            }
+            if (stack.constraints.format.length > 0) {
+                yaml += `  format:\n`;
+                stack.constraints.format.forEach(f => yaml += `    - ${f}\n`);
+            }
+            if (stack.constraints.do.length > 0) {
+                yaml += `  do:\n`;
+                stack.constraints.do.forEach(d => yaml += `    - ${d}\n`);
+            }
+            if (stack.constraints.dont.length > 0) {
+                yaml += `  dont:\n`;
+                stack.constraints.dont.forEach(d => yaml += `    - ${d}\n`);
+            }
+            yaml += `\n`;
+
+            // CONTEXT
+            yaml += `# CONTEXT LAYER - Background\n`;
+            yaml += `context:\n`;
+            yaml += `  background: |\n`;
+            (stack.context.background || '[BACKGROUND_INFO]').split('\n').forEach(line => {
+                yaml += `    ${line}\n`;
+            });
+            if (stack.context.references.length > 0) {
+                yaml += `  references:\n`;
+                stack.context.references.forEach(r => yaml += `    - ${r}\n`);
+            }
+            yaml += `\n`;
+
+            // INPUT
+            yaml += `# INPUT LAYER - The Request\n`;
+            yaml += `input:\n`;
+            yaml += `  user_request: |\n`;
+            (stack.input.user_request || '[USER_REQUEST]').split('\n').forEach(line => {
+                yaml += `    ${line}\n`;
+            });
+
+            return yaml;
+        }
+
+        function loadTemplate(templateName) {
+            const template = templates[templateName];
+            if (template) {
+                Object.assign(stack, JSON.parse(JSON.stringify(template)));
+                stack.provider = 'anthropic';
+                stack.model = 'claude-sonnet-4-5-20250929';
+                selectLayer(currentLayer);
+                updateYamlPreview();
+            }
+        }
+
+        function copyYaml() {
+            const yaml = generateYaml();
+            navigator.clipboard.writeText(yaml).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = originalText, 1500);
+            });
+        }
+
+        function downloadYaml() {
+            const yaml = generateYaml();
+            const blob = new Blob([yaml], { type: 'text/yaml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${stack.name || 'scenario'}.yaml`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function resetStack() {
+            loadTemplate('blank');
+        }
+
+        // Initialize
+        selectLayer('global');
+        loadTemplate('code-review');
+    </script>
+
+</body>
+</html>
