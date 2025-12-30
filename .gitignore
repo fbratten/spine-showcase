@@ -29,6 +29,7 @@ HANDOVER-*.md
 
 # Claude Code
 .claude/
+CLAUDE.md
 
 # Backlog (internal planning)
 BACKLOG.md
