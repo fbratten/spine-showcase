@@ -6,7 +6,7 @@
 [![Status](https://img.shields.io/badge/status-active-green)]()
 [![Version](https://img.shields.io/badge/version-0.3.17-blue)]()
 [![Live Site](https://img.shields.io/badge/site-live-blue)](https://fbratten.github.io/spine-showcase/)
-[![Demos](https://img.shields.io/badge/demos-6%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
+[![Demos](https://img.shields.io/badge/demos-7%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
 
 ---
 
