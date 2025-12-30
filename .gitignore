@@ -36,3 +36,12 @@ BACKLOG.md
 # Session notes
 SESSION-*.md
 NOTES-*.md
+
+# MCP configuration (local)
+.mcp.json
+
+# Archived files (local backups)
+archived/
+
+# KB setup notes (internal)
+KB/SETUP.md
