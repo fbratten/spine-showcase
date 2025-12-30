@@ -10,7 +10,7 @@
 ## Reference Materials
 
 The **Multi-Agent Playbook** PDF is available in the `KB/` folder:
-- `KB/Agent_Architecture_Blueprint_deckexample_v2_clean.pdf`
+- [`KB/Multi-Agent-Playbook-Blueprint.pdf`](../KB/Multi-Agent-Playbook-Blueprint.pdf)
 
 This architectural blueprint from Anthropic's research on production-ready multi-agent systems serves as the foundation for SPINE's design patterns.
 

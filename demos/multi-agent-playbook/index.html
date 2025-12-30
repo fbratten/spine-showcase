@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Playbook - SPINE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .pillar-card { transition: all 0.3s ease; }
+        .pillar-card:hover { transform: translateY(-4px); }
+        .pillar-card.active { ring: 2px solid; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 md:p-12">
+
+    <div class="max-w-5xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-8 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">&rarr;</span>
+                <a href="../" class="text-slate-600 hover:text-indigo-600">Demos</a>
+                <span class="text-slate-400">&rarr;</span>
+                <span class="text-slate-600">Multi-Agent Playbook</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">The Multi-Agent Playbook</h1>
+            <p class="text-lg text-slate-600">An Architectural Blueprint for Production-Ready Systems</p>
+        </header>
+
+        <!-- PDF Download Banner -->
+        <section class="mb-10 bg-gradient-to-r from-indigo-600 to-violet-600 rounded-xl p-6 text-white">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold mb-1">Download the Full Blueprint</h2>
+                    <p class="text-indigo-100">14-page architectural reference for multi-agent systems</p>
+                </div>
+                <a href="../../KB/Multi-Agent-Playbook-Blueprint.pdf"
+                   target="_blank"
+                   class="bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-indigo-50 transition flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    View PDF (12.5 MB)
+                </a>
+            </div>
+        </section>
+
+        <!-- Core Concept -->
+        <section class="mb-10">
+            <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                <h2 class="text-xl font-bold text-slate-900 mb-4">The Core Pattern: Closed-Loop Orchestration</h2>
+                <blockquote class="border-l-4 border-indigo-500 pl-4 italic text-slate-600 mb-4">
+                    "You do not prompt your sub-agents. You prompt your primary agent, and the primary agent prompts your sub-agents. They respond back to the primary agent, which synthesizes the information for you."
+                </blockquote>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-slate-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-slate-800 mb-2">The General Contractor Model</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
+                            <li>&bull; Orchestrator holds the "master blueprint"</li>
+                            <li>&bull; Sub-Agents are specialized trades</li>
+                            <li>&bull; Sub-Agents report to contractor, not user</li>
+                            <li>&bull; Direct user communication forbidden</li>
+                        </ul>
+                    </div>
+                    <div class="bg-slate-50 rounded-lg p-4">
+                        <h3 class="font-semibold text-slate-800 mb-2">Minimum Viable Stack</h3>
+                        <ul class="text-sm text-slate-600 space-y-1">
+                            <li>&bull; <strong>Claude Opus 4.5</strong> - Orchestrator + Sub-Agents</li>
+                            <li>&bull; <strong>Claude Code (CLI)</strong> - Agent harness</li>
+                            <li>&bull; <strong>Task Tool</strong> - Native sub-agent spawning</li>
+                            <li>&bull; <strong>Markdown File</strong> - Master plan</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Five Pillars -->
+        <section class="mb-10">
+            <h2 class="text-xl font-bold text-slate-900 mb-6">The Five Architectural Pillars</h2>
+            <p class="text-slate-600 mb-6">Click each pillar to explore its principle, practice, and payoff:</p>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+                <button onclick="showPillar(1)" id="pillar-btn-1" class="pillar-card bg-blue-500 text-white p-4 rounded-xl text-center hover:bg-blue-600 focus:ring-2 focus:ring-blue-300">
+                    <div class="text-2xl mb-1">💬</div>
+                    <div class="text-sm font-semibold">Communication</div>
+                </button>
+                <button onclick="showPillar(2)" id="pillar-btn-2" class="pillar-card bg-emerald-500 text-white p-4 rounded-xl text-center hover:bg-emerald-600 focus:ring-2 focus:ring-emerald-300">
+                    <div class="text-2xl mb-1">⚡</div>
+                    <div class="text-sm font-semibold">Execution</div>
+                </button>
+                <button onclick="showPillar(3)" id="pillar-btn-3" class="pillar-card bg-violet-500 text-white p-4 rounded-xl text-center hover:bg-violet-600 focus:ring-2 focus:ring-violet-300">
+                    <div class="text-2xl mb-1">🛡️</div>
+                    <div class="text-sm font-semibold">Empowerment</div>
+                </button>
+                <button onclick="showPillar(4)" id="pillar-btn-4" class="pillar-card bg-orange-500 text-white p-4 rounded-xl text-center hover:bg-orange-600 focus:ring-2 focus:ring-orange-300">
+                    <div class="text-2xl mb-1">📋</div>
+                    <div class="text-sm font-semibold">State</div>
+                </button>
+                <button onclick="showPillar(5)" id="pillar-btn-5" class="pillar-card bg-rose-500 text-white p-4 rounded-xl text-center hover:bg-rose-600 focus:ring-2 focus:ring-rose-300">
+                    <div class="text-2xl mb-1">🔄</div>
+                    <div class="text-sm font-semibold">Resilience</div>
+                </button>
+            </div>
+
+            <!-- Pillar Details -->
+            <div id="pillar-details" class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm min-h-[300px]">
+                <div id="pillar-1" class="pillar-content">
+                    <h3 class="text-lg font-bold text-blue-600 mb-3">Pillar I: Communication</h3>
+                    <p class="text-slate-700 font-medium mb-4">"Agents communicate through closed loops and verifiable artifacts."</p>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-blue-800 mb-2">The Principle</h4>
+                            <p class="text-sm text-slate-600">Sub-agents report exclusively to the Orchestrator. Direct user communication is forbidden.</p>
+                        </div>
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-blue-800 mb-2">The Practice</h4>
+                            <ul class="text-sm text-slate-600 space-y-1">
+                                <li>&bull; <strong>Condense:</strong> Summaries, metrics</li>
+                                <li>&bull; <strong>Preserve:</strong> Files, logs, errors</li>
+                            </ul>
+                        </div>
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-blue-800 mb-2">The Payoff</h4>
+                            <p class="text-sm text-slate-600">Verifiable workflows. Task completion confirmed by artifact presence.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pillar-2" class="pillar-content hidden">
+                    <h3 class="text-lg font-bold text-emerald-600 mb-3">Pillar II: Execution</h3>
+                    <p class="text-slate-700 font-medium mb-4">"Execution is a choice: parallel for speed, sequential for logic."</p>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-emerald-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-emerald-800 mb-2">The Principle</h4>
+                            <p class="text-sm text-slate-600">Orchestration adapts to task dependencies. Independent = parallel, dependent = sequential.</p>
+                        </div>
+                        <div class="bg-emerald-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-emerald-800 mb-2">The Practice</h4>
+                            <ul class="text-sm text-slate-600 space-y-1">
+                                <li>&bull; <strong>Parallel:</strong> 5 agents testing 5 stories</li>
+                                <li>&bull; <strong>Sequential:</strong> Plan &rarr; Build &rarr; Test</li>
+                            </ul>
+                        </div>
+                        <div class="bg-emerald-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-emerald-800 mb-2">The Payoff</h4>
+                            <p class="text-sm text-slate-600">Hybrid workflows: sequential master plan with parallel bursts.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pillar-3" class="pillar-content hidden">
+                    <h3 class="text-lg font-bold text-violet-600 mb-3">Pillar III: Empowerment & Isolation</h3>
+                    <p class="text-slate-700 font-medium mb-4">"Empower agents with tools, but isolate them in sandboxes."</p>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-violet-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-violet-800 mb-2">The Principle</h4>
+                            <p class="text-sm text-slate-600">Provide "right tooling" for capability. Restrict environment to contain risk.</p>
+                        </div>
+                        <div class="bg-violet-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-violet-800 mb-2">The Practice</h4>
+                            <ul class="text-sm text-slate-600 space-y-1">
+                                <li>&bull; Comprehensive tool suites</li>
+                                <li>&bull; E2B sandboxes per agent</li>
+                                <li>&bull; "Private Workshop" model</li>
+                            </ul>
+                        </div>
+                        <div class="bg-violet-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-violet-800 mb-2">The Payoff</h4>
+                            <p class="text-sm text-slate-600">Agents do "nasty engineering work" with contained blast radius.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pillar-4" class="pillar-content hidden">
+                    <h3 class="text-lg font-bold text-orange-600 mb-3">Pillar IV: State & Handoffs</h3>
+                    <p class="text-slate-700 font-medium mb-4">"State lives in the environment, not the agent's memory."</p>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-orange-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-orange-800 mb-2">The Principle</h4>
+                            <p class="text-sm text-slate-600">Preserve work artifacts and environment, not conversational history.</p>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-orange-800 mb-2">Four Artifacts</h4>
+                            <ul class="text-sm text-slate-600 space-y-1">
+                                <li>&bull; Environment (Sandbox)</li>
+                                <li>&bull; Instructional (Master Plan)</li>
+                                <li>&bull; Result (Logs, Assets)</li>
+                                <li>&bull; Codebase (Brownfield)</li>
+                            </ul>
+                        </div>
+                        <div class="bg-orange-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-orange-800 mb-2">The Payoff</h4>
+                            <p class="text-sm text-slate-600">Perfect recall. Seamless multi-session handoffs.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pillar-5" class="pillar-content hidden">
+                    <h3 class="text-lg font-bold text-rose-600 mb-3">Pillar V: Resilience</h3>
+                    <p class="text-slate-700 font-medium mb-4">"Resilience is architected through isolation and error routing."</p>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <div class="bg-rose-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-rose-800 mb-2">The Principle</h4>
+                            <p class="text-sm text-slate-600">Single sub-agent failure must not derail orchestration. Contain blast radius.</p>
+                        </div>
+                        <div class="bg-rose-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-rose-800 mb-2">The Practice</h4>
+                            <ul class="text-sm text-slate-600 space-y-1">
+                                <li>&bull; Isolated sandboxes</li>
+                                <li>&bull; Error routing loops</li>
+                                <li>&bull; Self-correcting workflows</li>
+                            </ul>
+                        </div>
+                        <div class="bg-rose-50 rounded-lg p-4">
+                            <h4 class="font-semibold text-rose-800 mb-2">The Payoff</h4>
+                            <p class="text-sm text-slate-600">Self-healing system. Component failures are expected, not exceptional.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Meta-Goal -->
+        <section class="mb-10">
+            <div class="bg-gradient-to-r from-slate-800 to-slate-700 rounded-xl p-6 text-white">
+                <h2 class="text-xl font-bold mb-3">The Meta-Goal</h2>
+                <blockquote class="text-2xl font-light italic mb-4">
+                    "The goal is not to build the application. It is to build the system that builds the application."
+                </blockquote>
+                <p class="text-slate-300">
+                    We are no longer prompt engineers talking to a single model. We are system architects designing resilient, scalable, observable agentic frameworks. The agent is the new compositional unit of engineering.
+                </p>
+            </div>
+        </section>
+
+        <!-- SPINE Implementation Link -->
+        <section class="mb-10">
+            <div class="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                <h2 class="text-xl font-bold text-slate-900 mb-4">SPINE Implementation</h2>
+                <p class="text-slate-600 mb-4">
+                    SPINE implements all five pillars of the Multi-Agent Playbook through its orchestration framework:
+                </p>
+                <div class="flex flex-wrap gap-3">
+                    <a href="../../docs/blueprint-implementation.md" class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-200 transition">
+                        Blueprint Implementation Guide &rarr;
+                    </a>
+                    <a href="../../" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-200 transition">
+                        SPINE Overview &rarr;
+                    </a>
+                    <a href="../" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-200 transition">
+                        All Demos &rarr;
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                &larr; Back to Demos
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+    <script>
+        function showPillar(num) {
+            // Hide all content
+            document.querySelectorAll('.pillar-content').forEach(el => el.classList.add('hidden'));
+            // Show selected
+            document.getElementById('pillar-' + num).classList.remove('hidden');
+
+            // Update button styles
+            document.querySelectorAll('[id^="pillar-btn-"]').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-offset-2');
+            });
+            document.getElementById('pillar-btn-' + num).classList.add('ring-4', 'ring-offset-2');
+        }
+
+        // Show first pillar by default
+        showPillar(1);
+    </script>
+
+</body>
+</html>

@@ -6,7 +6,7 @@
 [![Status](https://img.shields.io/badge/status-active-green)]()
 [![Version](https://img.shields.io/badge/version-0.3.17-blue)]()
 [![Live Site](https://img.shields.io/badge/site-live-blue)](https://fbratten.github.io/spine-showcase/)
-[![Demos](https://img.shields.io/badge/demos-5%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
+[![Demos](https://img.shields.io/badge/demos-6%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
 
 ---
 
@@ -96,7 +96,7 @@ Orchestrator Context (Signal)          Sub-Agent Context (Noise)
 
 **→ [Read the full Blueprint Implementation Guide](docs/blueprint-implementation.md)**
 
-**→ [View the Blueprint PDF](KB/Agent_Architecture_Blueprint_deckexample_v2_clean.pdf)**
+**→ [View the Multi-Agent Playbook (PDF)](KB/Multi-Agent-Playbook-Blueprint.pdf)**
 
 ---
 
@@ -364,7 +364,7 @@ python -m spine.api --port 8000
 
 | Resource | Description |
 |----------|-------------|
-| [Multi-Agent Playbook (PDF)](KB/Agent_Architecture_Blueprint_deckexample_v2_clean.pdf) | Architectural blueprint reference |
+| [Multi-Agent Playbook (PDF)](KB/Multi-Agent-Playbook-Blueprint.pdf) | Architectural blueprint for production-ready multi-agent systems |
 
 ---
 

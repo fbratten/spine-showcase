@@ -2,7 +2,7 @@
 
 > A detailed mapping between Anthropic's architectural blueprint for production-ready multi-agent systems and SPINE's implementation.
 
-**Reference Document:** [Agent Architecture Blueprint (PDF)](../KB/Agent_Architecture_Blueprint_deckexample_v2_clean.pdf)
+**Reference Document:** [Multi-Agent Playbook (PDF)](../KB/Multi-Agent-Playbook-Blueprint.pdf)
 
 ---
 
@@ -501,7 +501,7 @@ The blueprint identifies patterns that SPINE could further develop:
 
 ## References
 
-- **Blueprint PDF:** `KB/Agent_Architecture_Blueprint_deckexample_v2_clean.pdf`
+- **Blueprint PDF:** [`KB/Multi-Agent-Playbook-Blueprint.pdf`](../KB/Multi-Agent-Playbook-Blueprint.pdf)
 - **SPINE Repository:** [github.com/fbratten/spine](https://github.com/fbratten/spine) (private)
 - **SPINE Showcase:** [fbratten.github.io/spine-showcase](https://fbratten.github.io/spine-showcase/)
 
