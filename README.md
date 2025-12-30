@@ -33,10 +33,6 @@
 
 SPINE implements patterns from the **Multi-Agent Playbook**—an architectural blueprint for production-ready multi-agent systems that addresses the core challenge: *How do you manage delegation, state, execution, and failure without creating chaos?*
 
-<p align="center">
-  <img src="KB/orchestrator-pattern-diagram.png" alt="Orchestrator Pattern" width="600">
-</p>
-
 ### The General Contractor Model
 
 SPINE follows a **closed-loop orchestrator pattern** where:
