@@ -31,8 +31,12 @@ HANDOVER-*.md
 .claude/
 CLAUDE.md
 
-# Backlog (internal planning)
+# Backlog and task tracking (internal planning)
 BACKLOG.md
+NEXT.md
+
+# AI memory and context (internal)
+ai-memory/
 
 # Session notes
 SESSION-*.md
