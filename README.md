@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status](https://img.shields.io/badge/status-active-green)]()
-[![Version](https://img.shields.io/badge/version-0.3.17-blue)]()
+[![Version](https://img.shields.io/badge/version-0.3.20-blue)]()
 [![Live Site](https://img.shields.io/badge/site-live-blue)](https://fbratten.github.io/spine-showcase/)
 [![Demos](https://img.shields.io/badge/demos-7%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
 
@@ -22,10 +22,11 @@
 | 📊 **Full Traceability** | ToolEnvelope instrumentation with hierarchical trace correlation |
 | 🤖 **Multi-Provider Support** | Anthropic, OpenAI, Google Gemini, Grok |
 | 📋 **Tiered Enforcement** | Balanced capability usage based on task complexity |
-| 🧠 **Context Stacks** | Reproducible, structured context management |
+| 🧠 **Context Stacks** | Reproducible, structured context management via YAML scenarios |
 | 🔁 **Agentic Loop** | Autonomous "run until done" with oscillation detection |
 | 📝 **AI Code Review** | Multi-persona parallel review with consensus ranking |
 | 📈 **Observability** | Static HTML reports, REST API, health checks |
+| ⚙️ **Pluggable Executors** | SubagentExecutor (personas) and ClaudeCodeExecutor (CLI) |
 
 ---
 
@@ -137,7 +138,7 @@ SPINE uses a hierarchical context stack for consistent LLM interactions:
 }
 ```
 
-### Module Structure (v0.3.17)
+### Module Structure (v0.3.20)
 
 ```
 spine/
@@ -145,12 +146,17 @@ spine/
 ├── client/         # InstrumentedLLMClient, provider configs
 ├── patterns/       # fan_out(), pipeline()
 ├── orchestrator/   # AgenticLoop, OscillationTracker, TaskQueue
+│   ├── context_stack.py    # Context stack loader/builder (NEW)
+│   └── executors/          # Pluggable executors (NEW)
+│       ├── base.py         # Executor interface
+│       ├── subagent.py     # SubagentExecutor + context stacks
+│       └── claude_code.py  # ClaudeCodeExecutor (CLI subprocess)
 ├── memory/         # kv_store, vector_store, scratchpad
 ├── review/         # AI-powered code review
 ├── integration/    # Token-optimized MCP execution
 ├── enforcement/    # Tiered enforcement gate
 ├── health/         # Component health monitoring
-├── api/            # FastAPI REST API
+├── api/            # FastAPI REST API + /api/reviews (NEW)
 ├── reports/        # Static HTML report generator
 └── logging/        # Structured JSON logging
 ```
@@ -329,7 +335,16 @@ SPINE has been successfully integrated with:
 ### CLI Tools
 
 ```bash
-# Run orchestrator
+# Run orchestrator with SubagentExecutor (uses .claude/agents/ personas)
+python -m spine.orchestrator run --project /path --executor subagent
+
+# Run orchestrator with ClaudeCodeExecutor (spawns CLI subprocess)
+python -m spine.orchestrator run --project /path --executor claude-code --executor-budget 10.0
+
+# Run with context stacks from scenario files
+python -m spine.orchestrator run --project /path --executor subagent --scenario scenarios/research.yaml
+
+# Run with LLM evaluation
 python -m spine.orchestrator run --project /path --llm-eval
 
 # Generate reports
@@ -355,6 +370,9 @@ python -m spine.api --port 8000
 | [Architecture Overview](docs/architecture.md) | System design and components |
 | [Pattern Guide](docs/patterns.md) | Fan-out and Pipeline usage |
 | [Tiered Protocol](docs/tiered-enforcement.md) | Full enforcement protocol |
+| [Executor Framework](docs/executors.md) | SubagentExecutor and ClaudeCodeExecutor (NEW) |
+| [Context Stack Integration](docs/context-stacks.md) | YAML scenario files for prompt building (NEW) |
+| [Claude Code Automation](docs/claude-code-automation.md) | Disable prompts, auto-reload context (NEW) |
 
 ### Reference Materials
 
@@ -368,6 +386,9 @@ python -m spine.api --port 8000
 
 | Version | Highlights |
 |---------|------------|
+| **0.3.20** | Context Stack Integration - executors use `scenarios/*.yaml` for prompt building |
+| **0.3.19** | Executor Framework - `SubagentExecutor`, `ClaudeCodeExecutor` with pluggable design |
+| **0.3.18** | Dashboard integration - `/api/reviews` endpoints for review history |
 | **0.3.17** | Inline diff annotations, cost tracking per review |
 | **0.3.16** | NEXT.md integration for AgenticLoop |
 | **0.3.15** | `create_spine_llm_evaluator()` factory |
