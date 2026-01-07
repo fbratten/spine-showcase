@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status](https://img.shields.io/badge/status-active-green)]()
-[![Version](https://img.shields.io/badge/version-0.3.20-blue)]()
+[![Version](https://img.shields.io/badge/version-0.3.21-blue)]()
 [![Live Site](https://img.shields.io/badge/site-live-blue)](https://fbratten.github.io/spine-showcase/)
 [![Demos](https://img.shields.io/badge/demos-7%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
 
@@ -138,7 +138,7 @@ SPINE uses a hierarchical context stack for consistent LLM interactions:
 }
 ```
 
-### Module Structure (v0.3.20)
+### Module Structure (v0.3.21)
 
 ```
 spine/
@@ -146,17 +146,18 @@ spine/
 ├── client/         # InstrumentedLLMClient, provider configs
 ├── patterns/       # fan_out(), pipeline()
 ├── orchestrator/   # AgenticLoop, OscillationTracker, TaskQueue
-│   ├── context_stack.py    # Context stack loader/builder (NEW)
-│   └── executors/          # Pluggable executors (NEW)
+│   ├── context_stack.py    # Context stack loader/builder
+│   └── executors/          # Pluggable executors
 │       ├── base.py         # Executor interface
 │       ├── subagent.py     # SubagentExecutor + context stacks
-│       └── claude_code.py  # ClaudeCodeExecutor (CLI subprocess)
+│       ├── claude_code.py  # ClaudeCodeExecutor (CLI subprocess)
+│       └── mcp_orchestrator.py  # MCPOrchestratorExecutor (NEW)
 ├── memory/         # kv_store, vector_store, scratchpad
 ├── review/         # AI-powered code review
 ├── integration/    # Token-optimized MCP execution
 ├── enforcement/    # Tiered enforcement gate
 ├── health/         # Component health monitoring
-├── api/            # FastAPI REST API + /api/reviews (NEW)
+├── api/            # FastAPI REST API + /api/reviews
 ├── reports/        # Static HTML report generator
 └── logging/        # Structured JSON logging
 ```
@@ -370,9 +371,10 @@ python -m spine.api --port 8000
 | [Architecture Overview](docs/architecture.md) | System design and components |
 | [Pattern Guide](docs/patterns.md) | Fan-out and Pipeline usage |
 | [Tiered Protocol](docs/tiered-enforcement.md) | Full enforcement protocol |
-| [Executor Framework](docs/executors.md) | SubagentExecutor and ClaudeCodeExecutor (NEW) |
-| [Context Stack Integration](docs/context-stacks.md) | YAML scenario files for prompt building (NEW) |
-| [Claude Code Automation](docs/claude-code-automation.md) | Disable prompts, auto-reload context (NEW) |
+| [Executor Framework](docs/executors.md) | SubagentExecutor, ClaudeCodeExecutor, MCPOrchestratorExecutor |
+| [Context Stack Integration](docs/context-stacks.md) | YAML scenario files for prompt building |
+| [MCP Orchestrator Integration](docs/mcp-orchestrator-integration.md) | Optional intelligent tool routing (NEW) |
+| [Claude Code Automation](docs/claude-code-automation.md) | Disable prompts, auto-reload context |
 
 ### Reference Materials
 
@@ -386,6 +388,7 @@ python -m spine.api --port 8000
 
 | Version | Highlights |
 |---------|------------|
+| **0.3.21** | MCP Orchestrator Integration - optional intelligent tool routing with graceful fallback |
 | **0.3.20** | Context Stack Integration - executors use `scenarios/*.yaml` for prompt building |
 | **0.3.19** | Executor Framework - `SubagentExecutor`, `ClaudeCodeExecutor` with pluggable design |
 | **0.3.18** | Dashboard integration - `/api/reviews` endpoints for review history |
