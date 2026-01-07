@@ -319,8 +319,8 @@ SPINE has been successfully integrated with:
 | Provider | Models | Status |
 |----------|--------|--------|
 | Anthropic | Claude Opus 4.5, Sonnet 4.5, Haiku 4.5 | ✅ Active |
-| OpenAI | GPT-4o, GPT-4 | ✅ Active |
-| Google | Gemini Pro, Gemini Ultra | ✅ Active |
+| OpenAI | GPT-5.1, GPT-5 mini | ✅ Active |
+| Google | Gemini 3 Pro, Gemini 3 Flash | ✅ Active |
 | xAI | Grok | ✅ Active |
 
 ### Observability Stack

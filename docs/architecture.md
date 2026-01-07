@@ -175,8 +175,8 @@ SPINE abstracts away provider differences:
 | Provider | Models | Capabilities |
 |----------|--------|--------------|
 | Anthropic | Claude Opus 4.5, Sonnet 4.5, Haiku 4.5 | Full tool use, vision |
-| OpenAI | GPT-5 | Tool use, vision |
-| Google | Gemini Pro, Gemini Ultra | Tool use, vision |
+| OpenAI | GPT-5.1, GPT-5 mini | Tool use, vision |
+| Google | Gemini 3 Pro, Gemini 3 Flash | Tool use, vision |
 | xAI | Grok | Tool use |
 
 ---
