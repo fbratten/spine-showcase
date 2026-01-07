@@ -13,12 +13,12 @@ SPINE's orchestrator uses a **pluggable executor architecture** that separates t
 │  │ TaskQueue   │───▶│  Executor   │───▶│  Evaluator  │     │
 │  └─────────────┘    └──────┬──────┘    └─────────────┘     │
 │                            │                                │
-│              ┌─────────────┼─────────────┐                 │
-│              ▼             ▼             ▼                 │
-│      ┌────────────┐ ┌────────────┐ ┌────────────┐         │
-│      │ Subagent   │ │ClaudeCode  │ │  Custom    │         │
-│      │ Executor   │ │ Executor   │ │ Executor   │         │
-│      └────────────┘ └────────────┘ └────────────┘         │
+│        ┌───────────────────┼───────────────────┐           │
+│        ▼                   ▼                   ▼           │
+│  ┌────────────┐     ┌────────────┐     ┌────────────┐     │
+│  │ Subagent   │     │ClaudeCode  │     │    MCP     │     │
+│  │ Executor   │     │ Executor   │     │Orchestrator│     │
+│  └────────────┘     └────────────┘     └────────────┘     │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -95,6 +95,57 @@ python -m spine.orchestrator run --project /path \
 
 ---
 
+### MCPOrchestratorExecutor (v0.3.21+)
+
+Delegates task execution to the MCP Orchestrator Blueprint for intelligent tool routing.
+
+```python
+from spine.orchestrator.executors.mcp_orchestrator import (
+    MCPOrchestratorExecutor,
+    MCPOrchestratorConfig,
+    create_mcp_executor,
+)
+
+# Simple creation
+executor = create_mcp_executor(
+    base_url="http://localhost:8080",
+    capabilities=["code_generation", "python"],
+    fallback_enabled=True,
+)
+result = executor.execute(task, project_path, role="implementer")
+```
+
+**Features:**
+- Intelligent tool selection based on capabilities
+- Claude-first provider bias with automatic fallback
+- **Graceful degradation** - falls back to SubagentExecutor if unavailable
+- Learning from outcomes (score boosts)
+
+**Graceful Fallback:**
+```python
+# If MCP Orchestrator is unavailable, automatic fallback occurs
+if not executor.is_available():
+    # SubagentExecutor is used automatically
+    result.metadata["executor"] = "mcp_orchestrator_fallback"
+```
+
+**CLI Usage:**
+```bash
+# Use MCP Orchestrator executor
+python -m spine.orchestrator run --project /path \
+    --executor mcp-orchestrator \
+    --executor-url http://localhost:8080
+
+# Disable fallback (fail if unavailable)
+python -m spine.orchestrator run --project /path \
+    --executor mcp-orchestrator \
+    --no-fallback
+```
+
+**→ [Full MCP Orchestrator Integration Guide](mcp-orchestrator-integration.md)**
+
+---
+
 ## Executor Interface
 
 All executors implement the base `Executor` interface:
@@ -159,6 +210,7 @@ See [Context Stack Integration](context-stacks.md) for details on scenario files
 |----------|----------|------------|
 | **SubagentExecutor** | Programmatic control, persona-based tasks | Requires agent definitions |
 | **ClaudeCodeExecutor** | Full CLI capabilities, file operations | Higher overhead, subprocess management |
+| **MCPOrchestratorExecutor** | Intelligent tool routing, multi-provider | Requires external service, adds latency |
 
 ---
 
