@@ -1,6 +1,6 @@
 # MCP Orchestrator Integration (v0.3.21+)
 
-SPINE provides an **optional integration** with the MCP Orchestrator Blueprint project for intelligent tool routing with Claude-first dispatch.
+SPINE provides an **optional integration** with the Adaptive MCP Orchestrator Blueprint project for intelligent tool routing with Claude-first dispatch.
 
 ---
 
@@ -17,7 +17,120 @@ The `MCPOrchestratorExecutor` allows SPINE to delegate task execution to an exte
 
 ---
 
-## Architecture
+## What is the Adaptive MCP Orchestrator?
+
+The **Adaptive MCP Orchestrator Blueprint** is a standalone platform consisting of three integrated parts:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                  Adaptive MCP Orchestrator Blueprint                     │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌──────────────────────┐  ┌──────────────────────┐  ┌────────────────┐ │
+│  │   MCP Orchestrator   │  │  AI Assistant        │  │  MCP           │ │
+│  │   (Core Platform)    │  │  Integration         │  │  Meta-Router   │ │
+│  │                      │  │                      │  │                │ │
+│  │  • M1: Core Engine   │  │  • Gemini Adapter    │  │  • MCP Client  │ │
+│  │  • M2: Config        │  │  • Assistant Bridge  │  │  • Discovery   │ │
+│  │  • M3: Observability │  │  • Provider Monitor  │  │  • Registry    │ │
+│  │  • M4: Dashboard     │  │  • Multi-provider    │  │  • Router      │ │
+│  │  • M5: Learning      │  │    fallback chain    │  │  • Config      │ │
+│  │  • M6: Infrastructure│  │                      │  │                │ │
+│  └──────────────────────┘  └──────────────────────┘  └────────────────┘ │
+│                                                                          │
+│  951 tests across all modules                                           │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### The Three Parts
+
+| Part | Purpose | Components |
+|------|---------|------------|
+| **MCP Orchestrator** | Core cognitive dispatcher | Decision engine, invocation engine, config, logging, dashboard, learning layer |
+| **AI Assistant Integration** | Multi-provider AI access | Claude (primary), GPT, Gemini adapters with automatic fallback chain |
+| **MCP Meta-Router** | Tool discovery and routing | MCP client, service discovery, registry, intelligent routing |
+
+### How It Works
+
+When the MCP Orchestrator receives a task:
+
+1. **Decision Engine** analyzes the task and required capabilities
+2. **Learning Layer** applies score boosts based on historical success
+3. **AI Assistant Integration** routes to the best provider (Claude-first with 1.5x weight)
+4. **MCP Meta-Router** discovers and invokes appropriate MCP tools
+5. **Observability** logs all decisions, latencies, and outcomes
+
+---
+
+## The Black Box Relationship
+
+From SPINE's perspective, the Adaptive MCP Orchestrator is a **black box**:
+
+```
+┌─────────────────────────────────────┐
+│              SPINE                   │
+│                                      │
+│  Sends:                              │
+│  • Task description                  │
+│  • Required capabilities             │
+│  • Context (project, role)           │
+│                                      │
+│  Receives:                           │
+│  • Result (success/failure)          │
+│  • Output content                    │
+│  • Metadata (provider, latency)      │
+│                                      │
+└──────────────────┬──────────────────┘
+                   │
+                   │  POST /execute
+                   │  (single API call)
+                   ▼
+┌─────────────────────────────────────┐
+│    Adaptive MCP Orchestrator         │
+│    ═══════════════════════════       │
+│                                      │
+│    ┌─────────────────────────────┐  │
+│    │      BLACK BOX MAGIC        │  │
+│    │                             │  │
+│    │  • Which provider? (Claude) │  │
+│    │  • Which tools? (MCP)       │  │
+│    │  • Learn from outcome       │  │
+│    │  • Handle failures          │  │
+│    │  • Log everything           │  │
+│    │                             │  │
+│    └─────────────────────────────┘  │
+│                                      │
+│    SPINE doesn't need to know HOW   │
+│                                      │
+└─────────────────────────────────────┘
+```
+
+### What SPINE Sees vs What Actually Happens
+
+| SPINE Sees | What Actually Happens Inside |
+|------------|------------------------------|
+| `POST /execute` with task | Decision engine analyzes capabilities |
+| Waits for response... | Learning layer checks historical scores |
+| | AI Assistant Integration picks Claude (1.5x bias) |
+| | If Claude fails → automatic GPT fallback |
+| | If GPT fails → automatic Gemini fallback |
+| | MCP Meta-Router discovers required tools |
+| | Tools are invoked with proper context |
+| | Results are aggregated and scored |
+| | Learning layer records outcome for future |
+| Gets `{"status": "success", ...}` | All complexity hidden |
+
+### Why This Matters
+
+1. **SPINE remains simple** - Just sends tasks, gets results
+2. **Orchestrator handles complexity** - Provider selection, fallbacks, learning
+3. **Loose coupling** - SPINE works with or without the orchestrator
+4. **Future-proof** - Orchestrator can add providers without SPINE changes
+
+---
+
+## Architecture (SPINE Integration)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
