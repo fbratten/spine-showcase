@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status](https://img.shields.io/badge/status-active-green)]()
-[![Version](https://img.shields.io/badge/version-0.3.21-blue)]()
+[![Version](https://img.shields.io/badge/version-0.3.22-blue)]()
 [![Live Site](https://img.shields.io/badge/site-live-blue)](https://fbratten.github.io/spine-showcase/)
 [![Demos](https://img.shields.io/badge/demos-7%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
 
@@ -27,6 +27,7 @@
 | 📝 **AI Code Review** | Multi-persona parallel review with consensus ranking |
 | 📈 **Observability** | Static HTML reports, REST API, health checks |
 | ⚙️ **Pluggable Executors** | SubagentExecutor (personas) and ClaudeCodeExecutor (CLI) |
+| 🧠 **Persistent Memory** | Optional Minna Memory integration for cross-session memory |
 
 ---
 
@@ -373,7 +374,8 @@ python -m spine.api --port 8000
 | [Tiered Protocol](docs/tiered-enforcement.md) | Full enforcement protocol |
 | [Executor Framework](docs/executors.md) | SubagentExecutor, ClaudeCodeExecutor, MCPOrchestratorExecutor |
 | [Context Stack Integration](docs/context-stacks.md) | YAML scenario files for prompt building |
-| [MCP Orchestrator Integration](docs/mcp-orchestrator-integration.md) | Optional intelligent tool routing (NEW) |
+| [MCP Orchestrator Integration](docs/mcp-orchestrator-integration.md) | Optional intelligent tool routing |
+| [Minna Memory Integration](docs/minna-memory-integration.md) | Persistent cross-session memory (NEW) |
 | [Claude Code Automation](docs/claude-code-automation.md) | Disable prompts, auto-reload context |
 
 ### Reference Materials
@@ -388,6 +390,7 @@ python -m spine.api --port 8000
 
 | Version | Highlights |
 |---------|------------|
+| **0.3.22** | Minna Memory Integration - persistent cross-session memory with graceful fallback |
 | **0.3.21** | MCP Orchestrator Integration - optional intelligent tool routing with graceful fallback |
 | **0.3.20** | Context Stack Integration - executors use `scenarios/*.yaml` for prompt building |
 | **0.3.19** | Executor Framework - `SubagentExecutor`, `ClaudeCodeExecutor` with pluggable design |

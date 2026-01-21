@@ -7,6 +7,10 @@
 - [Tiered Enforcement Protocol](tiered-enforcement.md) - When to use each capability level
 - [Pattern Guide](patterns.md) - Fan-out and Pipeline usage
 
+## New in v0.3.22
+
+- [Minna Memory Integration](minna-memory-integration.md) - Persistent cross-session memory with graceful fallback
+
 ## New in v0.3.21
 
 - [MCP Orchestrator Integration](mcp-orchestrator-integration.md) - Optional intelligent tool routing with graceful fallback
@@ -34,7 +38,8 @@ This architectural blueprint from Anthropic's research on production-ready multi
 | **Orchestration Patterns** | [Pattern Guide](patterns.md) |
 | **Executors** | [Executor Framework](executors.md) |
 | **Context Stacks** | [Context Stack Integration](context-stacks.md) |
-| **MCP Orchestrator (NEW)** | [MCP Orchestrator Integration](mcp-orchestrator-integration.md) |
+| **MCP Orchestrator** | [MCP Orchestrator Integration](mcp-orchestrator-integration.md) |
+| **Minna Memory (NEW)** | [Minna Memory Integration](minna-memory-integration.md) |
 | **Automation** | [Claude Code Automation](claude-code-automation.md) |
 
 [← Back to Main](../README.md)

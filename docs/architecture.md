@@ -68,6 +68,7 @@ Works out of the box with Claude Code. Subagents can access conversation context
 | `research-notes-mcp` | parse, cluster, contradictions | Note processing |
 | `research-log-mcp` | create, log, cite | Citation management |
 | `smart-inventory` | analyze_project | CLAUDE.md generation |
+| `minna-memory` | store, recall, search, who | Persistent cross-session memory |
 
 ```
 Claude Code ←→ MCP Protocol ←→ External Tools
@@ -207,5 +208,6 @@ root_id: "session-abc123"
 
 - [Tiered Enforcement Protocol](tiered-enforcement.md) - when to use each capability level
 - [Pattern Guide](patterns.md) - fan-out and pipeline usage
+- [Minna Memory Integration](minna-memory-integration.md) - persistent cross-session memory
 
 [← Back to Main](../README.md)
