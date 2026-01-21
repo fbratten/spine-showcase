@@ -467,6 +467,122 @@ class MinnaIntegration:
 
 ---
 
+## Fringe Use Cases
+
+Beyond the standard patterns, Minna can be stretched for creative applications:
+
+### 1. Multi-Project Knowledge Transfer
+
+**Scenario:** Learning from one project applies to another.
+
+```
+# Project A discovers a useful pattern
+memory_store(entity="pattern:projectA:retry-backoff", attribute="pattern",
+             value="Exponential backoff with jitter for API calls")
+
+# Project B (different Minna DB) could import this
+# Manual: Export from A, import to B
+# Or: Use a shared "patterns" database path
+```
+
+**Fringe aspect:** Minna is per-project by design, but nothing stops you from pointing multiple projects at a shared `patterns.db` for cross-project learning.
+
+### 2. Prompt Engineering Memory
+
+**Scenario:** Remember which prompt phrasings work best.
+
+```
+memory_add_entity(name="prompt:code-review", entity_type="concept")
+memory_store(entity="prompt:code-review", attribute="effective",
+             value="Focus on security vulnerabilities, not style nitpicks")
+memory_store(entity="prompt:code-review", attribute="ineffective",
+             value="Generic 'review this code' produces low-quality output")
+```
+
+**Fringe aspect:** Using Minna to evolve prompts over time rather than just storing facts.
+
+### 3. Debug Session Continuity
+
+**Scenario:** Multi-day debugging where context is critical.
+
+```
+# Day 1: Initial investigation
+memory_store(entity="debug:issue-123", attribute="hypothesis",
+             value="Memory leak in connection pool - connections not released")
+memory_store(entity="debug:issue-123", attribute="ruled_out",
+             value="Not garbage collection - heap dumps normal")
+
+# Day 2: Continue where you left off
+profile = memory_who("debug:issue-123")
+# Returns full investigation history
+```
+
+**Fringe aspect:** Treating a debug session as an entity that accumulates knowledge.
+
+### 4. Code Review Persona Memory
+
+**Scenario:** Remember reviewer preferences per codebase.
+
+```
+memory_store(entity="reviewer:security-bot", attribute="focus",
+             value="SQL injection, XSS, auth bypass - ignore style")
+memory_store(entity="reviewer:perf-bot", attribute="focus",
+             value="N+1 queries, missing indexes, unbounded loops")
+
+# Before review, load persona preferences
+persona = memory_who("reviewer:security-bot")
+```
+
+**Fringe aspect:** Personas that evolve based on feedback rather than static prompts.
+
+### 5. Codebase Archaeology
+
+**Scenario:** Document tribal knowledge as you discover it.
+
+```
+# While exploring legacy code
+memory_store(entity="legacy:payment-module", attribute="warning",
+             value="Do NOT modify calculateTax() - breaks 3 downstream systems")
+memory_store(entity="legacy:payment-module", attribute="history",
+             value="Originally written for EU only, US bolted on in 2019")
+
+# Future sessions get this context automatically
+```
+
+**Fringe aspect:** Building institutional knowledge that persists beyond any single developer.
+
+### 6. A/B Testing Decisions
+
+**Scenario:** Track which approaches were tried and their outcomes.
+
+```
+memory_store(entity="experiment:auth-flow", attribute="approach_a",
+             value="OAuth2 with PKCE - worked but complex setup")
+memory_store(entity="experiment:auth-flow", attribute="approach_b",
+             value="Magic links - simpler but email deliverability issues")
+memory_store(entity="experiment:auth-flow", attribute="chosen",
+             value="Hybrid: Magic links for signup, OAuth for returning users")
+```
+
+**Fringe aspect:** Decision journaling that captures the exploration process, not just the outcome.
+
+### 7. Inter-Agent Communication
+
+**Scenario:** Agents leave messages for future agents.
+
+```
+# Architect agent leaves note
+memory_store(entity="handoff:task-123", attribute="for_implementer",
+             value="I chose microservices over monolith - see adr:arch-001 for rationale")
+
+# Implementer agent picks up
+notes = memory_recall(entity="handoff:task-123", attribute="for_implementer")
+```
+
+**Fringe aspect:** Asynchronous agent-to-agent communication via persistent memory.
+
+---
+
 ## Edge Cases and Limitations
 
 ### 1. Entity Type Constraints
