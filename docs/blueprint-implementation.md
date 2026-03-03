@@ -1,6 +1,8 @@
 # How SPINE Implements the Multi-Agent Playbook
 
-> A detailed mapping between Anthropic's architectural blueprint for production-ready multi-agent systems and SPINE's implementation.
+> A detailed mapping between the Multi-Agent Playbook architectural blueprint for production-ready multi-agent systems and SPINE's implementation.
+
+> **Note:** The Multi-Agent Playbook is an Anthropic publication. References to specific models in this document reflect the blueprint's original examples. SPINE generalizes these patterns to work with any LLM provider.
 
 **Reference Document:** [Multi-Agent Playbook (PDF)](../KB/Multi-Agent-Playbook-Blueprint.pdf)
 
@@ -71,8 +73,8 @@ Four essential components:
 
 | Component | Role |
 |-----------|------|
-| **Claude Opus 4.5** | Both Orchestrator and all Sub-Agents (uniform high-intelligence) |
-| **Claude Code (CLI)** | The "agent harness" execution environment |
+| **Flagship LLM** | Both Orchestrator and all Sub-Agents (uniform high-intelligence) |
+| **Agent Harness (CLI)** | The execution environment for agent workflows |
 | **Built-in Task Tool** | Native tool for spawning sub-agents (`parallel=true`) |
 | **Markdown File** | Immutable "master plan" with task-based lists |
 
@@ -80,8 +82,8 @@ Four essential components:
 
 | Blueprint Component | SPINE Equivalent | Notes |
 |---------------------|------------------|-------|
-| Claude Opus 4.5 | `InstrumentedLLMClient` | Multi-provider support (Anthropic, OpenAI, Gemini) |
-| Claude Code | `run_scenario.py` + CLI | Entry point for orchestrated workflows |
+| Flagship LLM | `InstrumentedLLMClient` | Multi-provider: Anthropic, Google, OpenAI, xAI |
+| Agent Harness | `run_scenario.py` + CLI | Entry point for orchestrated workflows |
 | Task Tool | `fan_out()`, `pipeline()` | Custom parallel/sequential execution |
 | Markdown File | Context Stacks + `NEXT.md` | 6-layer hierarchical context + task tracking |
 
@@ -91,8 +93,8 @@ SPINE extends the blueprint by supporting multiple LLM providers through a unifi
 from spine.client import InstrumentedLLMClient
 
 client = InstrumentedLLMClient(
-    provider="anthropic",  # or "openai", "gemini"
-    model="claude-opus-4-5-20251101"
+    provider="anthropic",  # or "openai", "gemini", "xai"
+    model="claude-opus-4-5-20251101"  # or "gpt-5.1", "gemini-3-pro"
 )
 ```
 
@@ -384,7 +386,7 @@ Four key metrics for agentic systems:
 | Metric | Description |
 |--------|-------------|
 | **Review Velocity** | How quickly can a human confirm the work is correct? |
-| **Tool Calls to Completion** | Smarter models are cheaper (Opus in 5 calls beats Sonnet in 10) |
+| **Tool Calls to Completion** | Smarter models are cheaper (a flagship model in 5 calls beats a mid-tier in 10) |
 | **Artifact Validation** | Did the required artifact get created? (check filesystem, not chat) |
 | **Resource Observability** | "Five Agent Summary" tracks tool uses and token usage |
 

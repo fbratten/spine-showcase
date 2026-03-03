@@ -265,12 +265,11 @@
             }
         };
 
-        let selectedModel = 'claude-opus';
+        let selectedModel = null;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             populatePricingTable();
-            selectModel('claude-opus');
         });
 
         function selectModel(modelId) {

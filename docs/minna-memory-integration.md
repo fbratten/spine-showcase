@@ -63,7 +63,7 @@ SPINE (backbone)
 
 ## MCP Tools (16)
 
-Minna exposes 16 MCP tools for Claude Code integration:
+Minna exposes 16 MCP tools for agent integration:
 
 | Tool | Purpose |
 |------|---------|
@@ -580,6 +580,32 @@ notes = memory_recall(entity="handoff:task-123", attribute="for_implementer")
 ```
 
 **Fringe aspect:** Asynchronous agent-to-agent communication via persistent memory.
+
+---
+
+## Alternative Memory Backends
+
+Minna is SPINE's default memory integration, but the architecture supports alternatives. Any backend that implements the same interface can be substituted:
+
+| Backend | Type | Best For | Integration |
+|---------|------|----------|-------------|
+| **Minna** (default) | SQLite + FTS5 | Single-user, portable, zero-config | MCP server |
+| **Redis** | In-memory KV | High-throughput, shared state across agents | Custom adapter via `kv_store.py` |
+| **PostgreSQL** | Relational | Multi-user, complex queries, production scale | Custom adapter via `kv_store.py` |
+| **SQLite (raw)** | File-based | Lightweight, no MCP overhead | Direct via `kv_store.py` |
+| **Vector DB** (Chroma, Qdrant) | Semantic search | Similarity-based recall, embedding workflows | Via `vector_store.py` |
+| **File-based** (`ai-memory/`) | Markdown files | Simple, git-tracked, human-readable | Direct file I/O |
+
+### Using Custom Memory Backends
+
+SPINE's memory module (`spine/memory/`) provides base interfaces:
+
+- `kv_store.py` — Key-value operations (adaptable to any KV backend)
+- `vector_store.py` — Vector operations (adaptable to any embedding store)
+- `scratchpad.py` — Working memory (any append-only store)
+- `session.py` — Ephemeral session memory (in-process, no external dependency)
+
+To use a different backend, implement the same interface and pass it to your executor configuration. Minna is the most tested and documented option, but SPINE's core orchestration works identically with any memory backend — or with no persistent memory at all.
 
 ---
 

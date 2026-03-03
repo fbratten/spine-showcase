@@ -1,6 +1,6 @@
 # MCP Orchestrator Integration (v0.3.21+)
 
-SPINE provides an **optional integration** with the Adaptive MCP Orchestrator Blueprint project for intelligent tool routing with Claude-first dispatch.
+SPINE provides an **optional integration** with the Adaptive MCP Orchestrator Blueprint project for intelligent tool routing with configurable provider priority.
 
 ---
 
@@ -9,7 +9,7 @@ SPINE provides an **optional integration** with the Adaptive MCP Orchestrator Bl
 The `MCPOrchestratorExecutor` allows SPINE to delegate task execution to an external MCP Orchestrator service, which provides:
 
 - **Intelligent tool selection** based on task capabilities
-- **Claude-first provider bias** with automatic fallback
+- **Configurable provider priority** with automatic fallback
 - **Learning from outcomes** (score boosts based on history)
 - **Full observability** (structured logging, metrics)
 
@@ -57,7 +57,7 @@ When the MCP Orchestrator receives a task:
 
 1. **Decision Engine** analyzes the task and required capabilities
 2. **Learning Layer** applies score boosts based on historical success
-3. **AI Assistant Integration** routes to the best provider (Claude-first with 1.5x weight)
+3. **AI Assistant Integration** routes to the best provider (configurable priority weights)
 4. **MCP Meta-Router** discovers and invokes appropriate MCP tools
 5. **Observability** logs all decisions, latencies, and outcomes
 
@@ -112,9 +112,9 @@ From SPINE's perspective, the Adaptive MCP Orchestrator is a **black box**:
 |------------|------------------------------|
 | `POST /execute` with task | Decision engine analyzes capabilities |
 | Waits for response... | Learning layer checks historical scores |
-| | AI Assistant Integration picks Claude (1.5x bias) |
-| | If Claude fails → automatic GPT fallback |
-| | If GPT fails → automatic Gemini fallback |
+| | AI Assistant Integration picks preferred provider (configurable bias) |
+| | If primary fails → automatic second-provider fallback |
+| | If second fails → automatic third-provider fallback |
 | | MCP Meta-Router discovers required tools |
 | | Tools are invoked with proper context |
 | | Results are aggregated and scored |
@@ -160,7 +160,7 @@ From SPINE's perspective, the Adaptive MCP Orchestrator is a **black box**:
 │  Core Orchestrator                                           │
 │  ├── Decision Engine (tool selection)                        │
 │  ├── Invocation Engine (tool calling)                        │
-│  └── Claude-first bias (1.5x weight)                        │
+│  └── Configurable provider bias (default: 1.5x weight)       │
 │                                                              │
 │  Supporting Modules:                                         │
 │  ├── Config Engine                                           │

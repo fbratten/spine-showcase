@@ -59,7 +59,7 @@ python -m spine.orchestrator run --project /path \
 
 ### ClaudeCodeExecutor
 
-Spawns Claude Code CLI as a subprocess for task execution.
+Spawns an agent CLI (e.g., Claude Code) as a subprocess for task execution.
 
 ```python
 from spine.orchestrator.executors import ClaudeCodeExecutor, ClaudeCodeConfig
@@ -75,7 +75,7 @@ result = executor.execute(task, project_path, role="researcher")
 ```
 
 **Features:**
-- Runs Claude Code CLI in subprocess
+- Runs agent CLI in subprocess (default: Claude Code)
 - Budget control via `--max-turns` (estimated from USD)
 - Permission bypass for sandboxed environments
 - Context stack integration for prompt building
@@ -117,7 +117,7 @@ result = executor.execute(task, project_path, role="implementer")
 
 **Features:**
 - Intelligent tool selection based on capabilities
-- Claude-first provider bias with automatic fallback
+- Configurable provider priority with automatic fallback
 - **Graceful degradation** - falls back to SubagentExecutor if unavailable
 - Learning from outcomes (score boosts)
 

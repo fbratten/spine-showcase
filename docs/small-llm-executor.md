@@ -6,7 +6,7 @@ Orchestrate 3B-8B quantized language models via MCP self-description layers for 
 
 ## Overview
 
-The SmallLLMExecutor is SPINE's 6th executor type, designed for tasks where a full-size model (Opus/Sonnet) is overkill. It wraps small, fast models (CodeLlama 7B, Qwen2.5-Coder 3B, Phi-3.5, DeepSeek-Coder) and provides them with structured MCP context to compensate for their limited capabilities.
+The SmallLLMExecutor is SPINE's 6th executor type, designed for tasks where a full-size flagship model is overkill. It wraps small, fast models (CodeLlama 7B, Qwen2.5-Coder 3B, Phi-3.5, DeepSeek-Coder) and provides them with structured MCP context to compensate for their limited capabilities.
 
 ```
 ┌───────────────────────────────────────────────────────────┐

@@ -107,8 +107,8 @@ SPINE operates across **three distinct capability layers**:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Layer 1: Claude Native                    │
-│  Built-in Task tool with subagent_types                     │
+│                    Layer 1: Host Agent                       │
+│  Built-in subagent types via host environment               │
 │  (Explore, Plan, code-architect, visual-tester, etc.)       │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -334,9 +334,9 @@ SPINE has been successfully integrated with:
 | Provider | Models | Status |
 |----------|--------|--------|
 | Anthropic | Claude Opus 4.5, Sonnet 4.5, Haiku 4.5 | ✅ Active |
-| OpenAI | GPT-5.1, GPT-5 mini | ✅ Active |
 | Google | Gemini 3 Pro, Gemini 3 Flash | ✅ Active |
-| xAI | Grok | ✅ Active |
+| OpenAI | GPT-5.1, GPT-5 mini | ✅ Active |
+| xAI | Grok 4.1 | ✅ Active |
 
 ### Observability Stack
 
@@ -402,7 +402,7 @@ python -m spine.api --port 8000
 | [Context Stack Integration](docs/context-stacks.md) | YAML scenario files for prompt building |
 | [MCP Orchestrator Integration](docs/mcp-orchestrator-integration.md) | Optional intelligent tool routing |
 | [Minna Memory Integration](docs/minna-memory-integration.md) | Persistent cross-session memory |
-| [Claude Code Automation](docs/claude-code-automation.md) | Disable prompts, auto-reload context |
+| [Agent Harness Automation](docs/claude-code-automation.md) | Disable prompts, auto-reload context (Claude Code) |
 
 ### Reference Materials
 

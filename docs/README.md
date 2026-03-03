@@ -31,14 +31,14 @@
 
 - [Executor Framework](executors.md) - SubagentExecutor, ClaudeCodeExecutor, and MCPOrchestratorExecutor
 - [Context Stack Integration](context-stacks.md) - YAML scenario files for prompt building
-- [Claude Code Automation](claude-code-automation.md) - Disable prompts, auto-reload after compaction
+- [Agent Harness Automation](claude-code-automation.md) - Disable prompts, auto-reload after compaction (Claude Code)
 
 ## Reference Materials
 
 The **Multi-Agent Playbook** PDF is available in the `KB/` folder:
 - [`KB/Multi-Agent-Playbook-Blueprint.pdf`](../KB/Multi-Agent-Playbook-Blueprint.pdf)
 
-This architectural blueprint from Anthropic's research on production-ready multi-agent systems serves as the foundation for SPINE's design patterns.
+This architectural blueprint on production-ready multi-agent systems (from Anthropic's research) serves as one of the foundations for SPINE's design patterns.
 
 ## Quick Links
 
@@ -55,6 +55,6 @@ This architectural blueprint from Anthropic's research on production-ready multi
 | **SmallLLMExecutor (NEW)** | [SmallLLMExecutor](small-llm-executor.md) |
 | **MCP Session Pool (NEW)** | [MCP Session Pool](mcp-session-pool.md) |
 | **Minna Memory** | [Minna Memory Integration](minna-memory-integration.md) |
-| **Automation** | [Claude Code Automation](claude-code-automation.md) |
+| **Automation** | [Agent Harness Automation](claude-code-automation.md) |
 
 [← Back to Main](../README.md)

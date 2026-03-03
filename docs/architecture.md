@@ -12,14 +12,14 @@ SPINE works across three layers:
 
 | Layer | What | Why |
 |-------|------|-----|
-| **1. Claude Native** | Task tool subagents (Explore, Plan, code-architect, visual-tester) | Parallel agents without MCP overhead |
+| **1. Host Agent** | Built-in subagent types (Explore, Plan, code-architect, visual-tester) | Parallel agents without MCP overhead |
 | **2. MCP Servers** | browser-mcp, next-conductor, research-agent-mcp, smart-inventory | External tool integration |
 | **3. SPINE Python** | fan_out(), pipeline(), ToolEnvelope, TraceScope | Custom instrumented orchestration |
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Layer 1: Claude Native                   │
-│  Built-in Task tool with subagent_types                     │
+│                    Layer 1: Host Agent                      │
+│  Built-in subagent types via host environment               │
 │  (Explore, Plan, code-architect, visual-tester, etc.)       │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -40,21 +40,23 @@ SPINE works across three layers:
 
 ---
 
-## Layer 1: Claude Native Subagents
+## Layer 1: Host Agent Subagents
 
 These are available via `Task(subagent_type="...")`:
 
-| Subagent | Model | What it does |
-|----------|-------|--------------|
+| Subagent | Tier | What it does |
+|----------|------|--------------|
 | `Explore` | Fast | Codebase exploration, file discovery |
-| `Plan` | Sonnet | Architecture planning, implementation design |
-| `research-coordinator` | Opus | Multi-source research with synthesis |
-| `code-architect` | Sonnet | System design, architectural decisions |
-| `visual-tester` | Haiku | UI verification via browser automation |
-| `context-engineer` | Sonnet | Context stack design and optimization |
+| `Plan` | Standard | Architecture planning, implementation design |
+| `research-coordinator` | Flagship | Multi-source research with synthesis |
+| `code-architect` | Standard | System design, architectural decisions |
+| `visual-tester` | Fast | UI verification via browser automation |
+| `context-engineer` | Standard | Context stack design and optimization |
 | `general-purpose` | Default | Complex multi-step tasks |
 
-Works out of the box with Claude Code. Subagents can access conversation context and run in parallel.
+> **Tier mapping is configurable:** Flagship = Opus/GPT-5.1/Gemini Pro, Standard = Sonnet/GPT-5.1-mini/Gemini Flash, Fast = Haiku/GPT-5-nano/Gemini Flash.
+
+Works with any compatible agent harness (e.g., Claude Code, custom CLI). Subagents can access conversation context and run in parallel.
 
 ---
 
@@ -71,7 +73,7 @@ Works out of the box with Claude Code. Subagents can access conversation context
 | `minna-memory` | store, recall, search, who | Persistent cross-session memory |
 
 ```
-Claude Code ←→ MCP Protocol ←→ External Tools
+Agent Harness ←→ MCP Protocol ←→ External Tools
                    │
                    ├── File Systems
                    ├── Browsers (Playwright)
@@ -176,9 +178,9 @@ SPINE abstracts away provider differences:
 | Provider | Models | Capabilities |
 |----------|--------|--------------|
 | Anthropic | Claude Opus 4.5, Sonnet 4.5, Haiku 4.5 | Full tool use, vision |
-| OpenAI | GPT-5.1, GPT-5 mini | Tool use, vision |
 | Google | Gemini 3 Pro, Gemini 3 Flash | Tool use, vision |
-| xAI | Grok | Tool use |
+| OpenAI | GPT-5.1, GPT-5 mini | Tool use, vision |
+| xAI | Grok 4.1 | Tool use |
 
 ---
 
