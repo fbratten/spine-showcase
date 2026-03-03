@@ -1,4 +1,4 @@
-# Executor Framework (v0.3.19+)
+# Executor Framework (v0.3.28)
 
 SPINE's orchestrator uses a **pluggable executor architecture** that separates task execution logic from the agentic loop. This allows swapping execution strategies without changing the core orchestration flow.
 
@@ -13,12 +13,12 @@ SPINE's orchestrator uses a **pluggable executor architecture** that separates t
 │  │ TaskQueue   │───▶│  Executor   │───▶│  Evaluator  │     │
 │  └─────────────┘    └──────┬──────┘    └─────────────┘     │
 │                            │                                │
-│        ┌───────────────────┼───────────────────┐           │
-│        ▼                   ▼                   ▼           │
-│  ┌────────────┐     ┌────────────┐     ┌────────────┐     │
-│  │ Subagent   │     │ClaudeCode  │     │    MCP     │     │
-│  │ Executor   │     │ Executor   │     │Orchestrator│     │
-│  └────────────┘     └────────────┘     └────────────┘     │
+│        ┌──────────┬──────────┼──────────┬──────────┐       │
+│        ▼          ▼          ▼          ▼          ▼       │
+│  ┌──────────┐┌──────────┐┌──────────┐┌──────────┐┌──────┐│
+│  │ Subagent ││ClaudeCode││   MCP    ││ SmallLLM ││Router││
+│  │ Executor ││ Executor ││Orchestr. ││ Executor ││      ││
+│  └──────────┘└──────────┘└──────────┘└──────────┘└──────┘│
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -146,6 +146,75 @@ python -m spine.orchestrator run --project /path \
 
 ---
 
+### SmallLLMExecutor (v0.3.27+)
+
+Orchestrates 3B-8B quantized language models via MCP self-description layers for cost-optimized, edge-capable task execution.
+
+```python
+from spine.orchestrator.executors.small_llm_executor import SmallLLMExecutor, SmallLLMConfig
+
+config = SmallLLMConfig(
+    model_name="qwen2.5-coder:3b",
+    provider="ollama",              # "ollama" | "anthropic"
+    base_url="http://localhost:11434",
+    max_context_tokens=4096,
+    mcp_servers=["research-agent-mcp", "evaluation-mcp"],
+    temperature=0.1,
+)
+executor = SmallLLMExecutor(config)
+result = executor.execute(task, project_path)
+```
+
+**Features:**
+- 4-layer MCP self-description context (L0 instructions, L1 schema, L2 resources, L3 prompts)
+- Simple `TOOL_CALL:` output format optimized for small model parsing
+- Ollama (local) and Anthropic Haiku (API) providers
+- Uses MCPSessionPool for persistent MCP connections (v0.3.28)
+- Graceful degradation when MCP context unavailable
+
+**CLI Usage:**
+```bash
+python -m spine.orchestrator run --project /path --executor small-llm
+```
+
+**→ [Full SmallLLMExecutor Guide](small-llm-executor.md)**
+
+---
+
+### TaskTypeRouter (v0.3.26+)
+
+Dynamic routing executor that classifies tasks and delegates to the best executor per type.
+
+```python
+from spine.orchestrator.task_router import TaskTypeRouter, TaskType, RoutingRule
+from spine.orchestrator.executors import SubagentExecutor, ClaudeCodeExecutor
+
+rules = [
+    RoutingRule(TaskType.CODE, SubagentExecutor(code_config)),
+    RoutingRule(TaskType.RESEARCH, ClaudeCodeExecutor(research_config)),
+]
+router = TaskTypeRouter(rules=rules, fallback=SubagentExecutor(default_config))
+result = router.execute(task, project_path, role="implementer")
+```
+
+**Features:**
+- Heuristic task classification (no LLM call needed — fast and free)
+- 6 task types: CODE, RESEARCH, CONTENT, REVIEW, ANALYSIS, GENERAL
+- Implements Executor interface — transparent to AgenticLoop
+- Config-driven routing rules
+
+**CLI Usage:**
+```bash
+python -m spine.orchestrator run --project /path \
+    --executor router \
+    --route CODE:subagent \
+    --route RESEARCH:claude-code
+```
+
+**→ [Full Dynamic Routing Guide](dynamic-routing.md)**
+
+---
+
 ## Executor Interface
 
 All executors implement the base `Executor` interface:
@@ -211,6 +280,8 @@ See [Context Stack Integration](context-stacks.md) for details on scenario files
 | **SubagentExecutor** | Programmatic control, persona-based tasks | Requires agent definitions |
 | **ClaudeCodeExecutor** | Full CLI capabilities, file operations | Higher overhead, subprocess management |
 | **MCPOrchestratorExecutor** | Intelligent tool routing, multi-provider | Requires external service, adds latency |
+| **SmallLLMExecutor** | Cost-optimized tasks, edge deployment | Limited model capability, needs MCP context |
+| **TaskTypeRouter** | Mixed workloads, automatic delegation | Adds classification step, needs routing rules |
 
 ---
 

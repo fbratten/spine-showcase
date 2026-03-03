@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status](https://img.shields.io/badge/status-active-green)]()
-[![Version](https://img.shields.io/badge/version-0.3.22-blue)]()
+[![Version](https://img.shields.io/badge/version-0.3.28-blue)]()
 [![Live Site](https://img.shields.io/badge/site-live-blue)](https://fbratten.github.io/spine-showcase/)
 [![Demos](https://img.shields.io/badge/demos-7%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
 
@@ -26,7 +26,10 @@
 | 🔁 **Agentic Loop** | Autonomous "run until done" with oscillation detection |
 | 📝 **AI Code Review** | Multi-persona parallel review with consensus ranking |
 | 📈 **Observability** | Static HTML reports, REST API, health checks |
-| ⚙️ **Pluggable Executors** | SubagentExecutor (personas) and ClaudeCodeExecutor (CLI) |
+| ⚙️ **Pluggable Executors** | 7 executor types including SmallLLMExecutor for 3B-8B models |
+| 🔀 **Dynamic Routing** | Automatic task classification and executor selection by type |
+| 🤖 **Small LLM Support** | Orchestrate 3B-8B quantized models via MCP self-description layers |
+| 🔗 **MCP Session Pool** | Persistent MCP connections with background event loop |
 | 🧠 **Persistent Memory** | Optional Minna Memory integration for cross-session memory |
 
 ---
@@ -139,24 +142,34 @@ SPINE uses a hierarchical context stack for consistent LLM interactions:
 }
 ```
 
-### Module Structure (v0.3.21)
+### Module Structure (v0.3.28)
 
 ```
 spine/
 ├── core/           # ToolEnvelope, TraceScope
-├── client/         # InstrumentedLLMClient, provider configs
-├── patterns/       # fan_out(), pipeline()
+├── client/         # InstrumentedLLMClient, provider configs, retry/timeout
+├── patterns/       # fan_out(), pipeline(), hermeneutic_loop(), safe_access()
 ├── orchestrator/   # AgenticLoop, OscillationTracker, TaskQueue
-│   ├── context_stack.py    # Context stack loader/builder
-│   └── executors/          # Pluggable executors
-│       ├── base.py         # Executor interface
-│       ├── subagent.py     # SubagentExecutor + context stacks
-│       ├── claude_code.py  # ClaudeCodeExecutor (CLI subprocess)
-│       └── mcp_orchestrator.py  # MCPOrchestratorExecutor (NEW)
-├── memory/         # kv_store, vector_store, scratchpad
+│   ├── context_stack.py         # Context stack loader/builder
+│   ├── context_discovery.py     # Layered context discovery L1-L4
+│   ├── task_router.py           # Dynamic Routing — TaskTypeRouter (v0.3.26)
+│   ├── routing_callbacks.py     # Routing callbacks factory (v0.3.26)
+│   ├── mcp_self_description.py  # 4-layer MCP self-description generator (v0.3.28)
+│   ├── capability_registry.py   # Project capability scanning + S41 map
+│   ├── gap_tracker.py           # Structured gap detection and clustering
+│   └── executors/               # 7 pluggable executors
+│       ├── base.py              # Executor interface
+│       ├── subagent.py          # SubagentExecutor + context stacks
+│       ├── claude_code.py       # ClaudeCodeExecutor (CLI subprocess)
+│       ├── mcp_orchestrator.py  # MCPOrchestratorExecutor
+│       ├── content_pipeline.py  # ContentPipelineExecutor (video/content)
+│       ├── small_llm_executor.py    # SmallLLMExecutor — 3B-8B models (v0.3.27)
+│       └── mcp_session_pool.py      # MCPSessionPool — persistent sessions (v0.3.28)
+├── memory/         # kv_store, vector_store, scratchpad, session (ephemeral)
+├── grammar/        # EBNF-Rig Veda knowledge annotation
 ├── review/         # AI-powered code review
 ├── integration/    # Token-optimized MCP execution
-├── enforcement/    # Tiered enforcement gate
+├── enforcement/    # Tiered + Five-Point Protocol enforcement
 ├── health/         # Component health monitoring
 ├── api/            # FastAPI REST API + /api/reviews
 ├── reports/        # Static HTML report generator
@@ -340,8 +353,18 @@ SPINE has been successfully integrated with:
 # Run orchestrator with SubagentExecutor (uses .claude/agents/ personas)
 python -m spine.orchestrator run --project /path --executor subagent
 
-# Run orchestrator with ClaudeCodeExecutor (spawns CLI subprocess)
-python -m spine.orchestrator run --project /path --executor claude-code --executor-budget 10.0
+# Run with Dynamic Routing (auto-selects executor by task type) [v0.3.26]
+python -m spine.orchestrator run --project /path --executor router \
+    --route CODE:subagent --route RESEARCH:claude-code
+
+# Run with SmallLLMExecutor (3B-8B models via MCP) [v0.3.27]
+python -m spine.orchestrator run --project /path --executor small-llm
+
+# Classify task type without executing [v0.3.26]
+python -m spine.orchestrator classify --project /path --task-id TASK-001
+
+# Generate MCP self-description for a server [v0.3.28]
+python -m spine.orchestrator describe --project /path --server my-mcp
 
 # Run with context stacks from scenario files
 python -m spine.orchestrator run --project /path --executor subagent --scenario scenarios/research.yaml
@@ -372,10 +395,13 @@ python -m spine.api --port 8000
 | [Architecture Overview](docs/architecture.md) | System design and components |
 | [Pattern Guide](docs/patterns.md) | Fan-out and Pipeline usage |
 | [Tiered Protocol](docs/tiered-enforcement.md) | Full enforcement protocol |
-| [Executor Framework](docs/executors.md) | SubagentExecutor, ClaudeCodeExecutor, MCPOrchestratorExecutor |
+| [Executor Framework](docs/executors.md) | 7 executor types including SmallLLMExecutor |
+| [Dynamic Routing](docs/dynamic-routing.md) | Task classification and executor selection (NEW v0.3.26) |
+| [SmallLLMExecutor](docs/small-llm-executor.md) | 3B-8B model orchestration via MCP self-description (NEW v0.3.27) |
+| [MCP Session Pool](docs/mcp-session-pool.md) | Persistent MCP sessions + self-description generator (NEW v0.3.28) |
 | [Context Stack Integration](docs/context-stacks.md) | YAML scenario files for prompt building |
 | [MCP Orchestrator Integration](docs/mcp-orchestrator-integration.md) | Optional intelligent tool routing |
-| [Minna Memory Integration](docs/minna-memory-integration.md) | Persistent cross-session memory (NEW) |
+| [Minna Memory Integration](docs/minna-memory-integration.md) | Persistent cross-session memory |
 | [Claude Code Automation](docs/claude-code-automation.md) | Disable prompts, auto-reload context |
 
 ### Reference Materials
@@ -390,6 +416,11 @@ python -m spine.api --port 8000
 
 | Version | Highlights |
 |---------|------------|
+| **0.3.28** | MCPSessionPool (persistent MCP sessions) + MCP Self-Description Generator (4-layer L0-L3) |
+| **0.3.27** | SmallLLMExecutor — orchestrate 3B-8B quantized LLMs via MCP self-description layers |
+| **0.3.26** | Dynamic Routing — TaskTypeRouter, classify_task_type, routing callbacks + Pattern C + retry/timeout |
+| **0.3.25** | Memory-First Learning Loop — 5 behaviors, gap tracker, capability registry, session consolidation |
+| **0.3.24** | Content pipeline, ephemeral session memory, context discovery L1-L4, runtime tier enforcement |
 | **0.3.22** | Minna Memory Integration - persistent cross-session memory with graceful fallback |
 | **0.3.21** | MCP Orchestrator Integration - optional intelligent tool routing with graceful fallback |
 | **0.3.20** | Context Stack Integration - executors use `scenarios/*.yaml` for prompt building |
