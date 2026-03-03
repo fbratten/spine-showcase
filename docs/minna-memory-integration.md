@@ -1,6 +1,6 @@
 # Minna Memory Integration (v0.3.22+)
 
-SPINE provides an **optional integration** with **Minna Memory (mem-system-lite-mcp)** for persistent cross-session memory capabilities.
+SPINE integrates with **Minna Memory (mem-system-lite-mcp)** for persistent cross-session memory. Designed as a modular add-on — SPINE works identically with or without it, and alternative memory backends are supported.
 
 ---
 
@@ -609,33 +609,27 @@ To use a different backend, implement the same interface and pass it to your exe
 
 ---
 
-## Edge Cases and Limitations
+## Design Choices
 
-### 1. Entity Type Constraints
+### 1. Focused Entity Type System
 
-**Only 5 types allowed:** person, project, concept, topic, preference
+Minna uses 5 core types (person, project, concept, topic, preference) to maintain semantic clarity and prevent over-classification. For specialized needs, use `concept` with naming prefixes — e.g., `adr:project:auth-design` (see naming conventions above).
 
-**Workaround:** Use `concept` with naming prefixes (see naming conventions above)
+### 2. Per-Machine Database
 
-### 2. Database Per-Machine
+Each machine maintains its own `.spine/minna.db`, ensuring data integrity without coordination overhead. For shared scenarios, configure a shared database path or use export/import workflows.
 
-`.spine/minna.db` is gitignored (binary file, per-machine state).
+### 3. Confidence Decay Model
 
-**Implication:** Each developer/machine has their own memory store.
+Memories persist and naturally decay in confidence over time (~90-day half-life). This preserves important history while surfacing fresher context automatically — no manual cleanup needed.
 
-**If shared memory needed:** Consider a shared database path or export/import workflows.
+### 4. Single-User Optimized
 
-### 3. No Automatic Cleanup
+Minna is designed for single-user workflows, eliminating locking complexity. This keeps the memory layer lightweight and dependency-free.
 
-Memories persist indefinitely. Use confidence decay + filtering to surface relevant memories.
+### 5. Text-Based Search (FTS5)
 
-### 4. Single-User Assumption
-
-Minna assumes single-user access to the database. No built-in locking for concurrent access.
-
-### 5. Search Limitations
-
-FTS5 search is text-based, not semantic. Use specific keywords for best results.
+Full-text search provides fast, exact keyword matching with zero external dependencies. For semantic/embedding-based search, see the Alternative Memory Backends section above.
 
 ---
 
@@ -674,7 +668,7 @@ memory_summarize_session(session_id="...", summary="...")
 | [SPINE Integration Strategy](https://github.com/fbratten/spine) | Strategy doc in `ai-memory/integrations/` |
 | [spine-integrations](https://github.com/fbratten/spine-integrations) | Implementation package [PROJ-SOLAR-SPARK] |
 | [mem-system-lite-mcp](https://github.com/fbratten/mem-system-lite-mcp) | Core Minna library |
-| [MCP Orchestrator](mcp-orchestrator-integration.md) | Another optional integration |
+| [MCP Orchestrator](mcp-orchestrator-integration.md) | Intelligent tool routing add-on |
 
 ---
 

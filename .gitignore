@@ -44,9 +44,20 @@ NOTES-*.md
 
 # MCP configuration (local)
 .mcp.json
+.mcp.json.backup*
+
+# Screenshots (local verification)
+screenshots/
 
 # Archived files (local backups)
 archived/
 
 # KB setup notes (internal)
 KB/SETUP.md
+
+# Python artifacts (should never exist here, but safety net)
+*.py
+*.pyc
+__pycache__/
+*.egg-info/
+.spine/

@@ -235,7 +235,7 @@ if should_use_code_execution(tool_count=3):
     )
 ```
 
-**Current Gap:** SPINE doesn't yet implement per-agent E2B sandboxes. Sub-agents share the execution environment. This is identified as a future enhancement opportunity.
+**Architectural Note:** Sub-agents share the host execution environment, optimized for low-overhead multi-agent coordination. Per-agent isolation (e.g., E2B sandboxes) is supported as an optional extension for stricter containment requirements.
 
 ---
 

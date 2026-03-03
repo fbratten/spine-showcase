@@ -38,7 +38,7 @@ The SmallLLMExecutor is SPINE's 6th executor type, designed for tasks where a fu
 
 ## MCP Self-Description Layers
 
-The key insight: small models can't figure out tool usage from raw schemas alone. SPINE provides structured context at four layers:
+The key insight: small models achieve significantly better tool usage accuracy when given structured context at multiple layers, rather than relying on raw schemas alone. SPINE provides this context at four layers:
 
 | Layer | Content | Token Budget |
 |-------|---------|-------------|

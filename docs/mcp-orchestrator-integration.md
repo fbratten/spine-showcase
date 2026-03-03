@@ -1,6 +1,6 @@
 # MCP Orchestrator Integration (v0.3.21+)
 
-SPINE provides an **optional integration** with the Adaptive MCP Orchestrator Blueprint project for intelligent tool routing with configurable provider priority.
+SPINE integrates with the Adaptive MCP Orchestrator Blueprint for intelligent tool routing with configurable provider priority. Designed as a modular add-on — SPINE operates with full functionality independently, with automatic fallback when the orchestrator is unavailable.
 
 ---
 
@@ -402,57 +402,34 @@ The executor requires `httpx` for HTTP communication:
 pip install httpx
 ```
 
-This is already included in SPINE's `requirements.txt` as an optional dependency.
+This is included in SPINE's `requirements.txt`.
 
 ---
 
-## Troubleshooting
+## Verification
 
-### MCP Orchestrator Not Available
+### Health Check
 
-**Symptom:** Warning logged, fallback to SubagentExecutor
-
-**Check:**
 ```bash
-# Is it running?
 curl http://localhost:8080/health
-
-# Check Docker
-docker ps | grep mcp
-
-# Start if needed
-docker-compose up -d
+# Returns: {"status": "healthy", ...}
 ```
 
-### Connection Timeout
+### Graceful Behavior
 
-**Symptom:** `MCP Orchestrator timeout after 60s`
+| Scenario | What Happens |
+|----------|-------------|
+| MCP Orchestrator running | Intelligent tool routing with provider selection |
+| MCP Orchestrator unavailable | Automatic fallback to SubagentExecutor (no loss of functionality) |
+| Timeout | Automatic fallback with configurable timeout (`timeout_seconds=120`) |
 
-**Solutions:**
-1. Increase timeout in config: `timeout_seconds=120`
-2. Check network connectivity
-3. Check MCP Orchestrator logs for slow operations
-
-### Import Error (httpx not installed)
-
-**Symptom:** `ImportError: httpx not found`
-
-**Solution:**
-```bash
-pip install httpx
-```
-
----
-
-## How to Disable
-
-If you want to disable MCP Orchestrator integration:
+### Configuration Options
 
 ```python
-# Option 1: Disable fallback (fail if unavailable)
-config = MCPOrchestratorConfig(fallback_enabled=False)
+# Use MCP Orchestrator with automatic fallback
+config = MCPOrchestratorConfig(fallback_enabled=True)
 
-# Option 2: Use SubagentExecutor directly
+# Use SubagentExecutor directly (skip orchestrator)
 from spine.orchestrator.executors import SubagentExecutor
 executor = SubagentExecutor(config)
 ```
