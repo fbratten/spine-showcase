@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - OODA Loop Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+
+        /* Phase colors */
+        .phase-observe { --phase-color: #3b82f6; --phase-bg: #eff6ff; --phase-border: #bfdbfe; }
+        .phase-orient { --phase-color: #8b5cf6; --phase-bg: #f5f3ff; --phase-border: #ddd6fe; }
+        .phase-decide { --phase-color: #f97316; --phase-bg: #fff7ed; --phase-border: #fed7aa; }
+        .phase-act { --phase-color: #22c55e; --phase-bg: #f0fdf4; --phase-border: #bbf7d0; }
+        .phase-reflect { --phase-color: #ef4444; --phase-bg: #fef2f2; --phase-border: #fecaca; }
+
+        /* Cycle diagram */
+        .cycle-container {
+            position: relative;
+            width: 380px;
+            height: 380px;
+            margin: 0 auto;
+        }
+        .cycle-node {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-align: center;
+            z-index: 2;
+        }
+        .cycle-node:hover, .cycle-node.active {
+            transform: scale(1.15);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .cycle-node.active {
+            border-color: currentColor;
+        }
+        .cycle-node .phase-number {
+            font-size: 0.65rem;
+            opacity: 0.7;
+            margin-bottom: 2px;
+        }
+
+        /* Position nodes in a circle */
+        .node-observe  { top: 0; left: 50%; transform: translateX(-50%); }
+        .node-orient   { top: 22%; right: 0; }
+        .node-decide   { bottom: 8%; right: 8%; }
+        .node-act      { bottom: 8%; left: 8%; }
+        .node-reflect  { top: 22%; left: 0; }
+
+        .cycle-node.active.node-observe  { transform: translateX(-50%) scale(1.15); }
+
+        /* SVG arrows */
+        .cycle-svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .cycle-svg path {
+            fill: none;
+            stroke: #cbd5e1;
+            stroke-width: 2;
+            marker-end: url(#arrowhead);
+        }
+        .cycle-svg path.active-arrow {
+            stroke-width: 3;
+            filter: drop-shadow(0 0 3px currentColor);
+        }
+
+        /* Simulator */
+        @keyframes pulsePhase {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .sim-active { animation: pulsePhase 0.8s ease-in-out infinite; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+
+        .phase-step {
+            transition: all 0.3s ease;
+        }
+        .phase-step.completed {
+            opacity: 0.5;
+        }
+        .phase-step.current {
+            border-left-width: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 md:p-12">
+
+    <div class="max-w-5xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-12 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">&rarr;</span>
+                <span class="text-slate-600">Interactive Demo</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">OODA Loop Explorer</h1>
+            <p class="text-lg text-slate-600">Interactive visualization of SPINE's 5-phase agent decision cycle</p>
+        </header>
+
+        <!-- Cycle Diagram + Detail Panel -->
+        <section class="mb-10">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">The OODA Cycle</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Diagram -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-center">
+                    <div class="cycle-container">
+                        <svg class="cycle-svg" viewBox="0 0 380 380">
+                            <defs>
+                                <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                    <polygon points="0 0, 8 3, 0 6" fill="#94a3b8" />
+                                </marker>
+                                <marker id="arrowhead-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                    <polygon points="0 0, 8 3, 0 6" fill="#3b82f6" />
+                                </marker>
+                                <marker id="arrowhead-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                    <polygon points="0 0, 8 3, 0 6" fill="#8b5cf6" />
+                                </marker>
+                                <marker id="arrowhead-orange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                    <polygon points="0 0, 8 3, 0 6" fill="#f97316" />
+                                </marker>
+                                <marker id="arrowhead-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                    <polygon points="0 0, 8 3, 0 6" fill="#22c55e" />
+                                </marker>
+                                <marker id="arrowhead-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                                    <polygon points="0 0, 8 3, 0 6" fill="#ef4444" />
+                                </marker>
+                            </defs>
+                            <!-- Observe -> Orient -->
+                            <path id="arrow-0" d="M 230 55 Q 300 40, 320 110" />
+                            <!-- Orient -> Decide -->
+                            <path id="arrow-1" d="M 340 200 Q 360 280, 310 320" />
+                            <!-- Decide -> Act -->
+                            <path id="arrow-2" d="M 240 345 Q 190 370, 140 345" />
+                            <!-- Act -> Reflect -->
+                            <path id="arrow-3" d="M 55 310 Q 10 270, 20 200" />
+                            <!-- Reflect -> Observe -->
+                            <path id="arrow-4" d="M 55 110 Q 80 40, 155 50" />
+                        </svg>
+
+                        <div class="cycle-node node-observe bg-blue-100 text-blue-700" onclick="selectPhase('observe')" id="node-observe">
+                            <span class="phase-number">Phase 1</span>
+                            Observe
+                        </div>
+                        <div class="cycle-node node-orient bg-purple-100 text-purple-700" onclick="selectPhase('orient')" id="node-orient">
+                            <span class="phase-number">Phase 2</span>
+                            Orient
+                        </div>
+                        <div class="cycle-node node-decide bg-orange-100 text-orange-700" onclick="selectPhase('decide')" id="node-decide">
+                            <span class="phase-number">Phase 3</span>
+                            Decide
+                        </div>
+                        <div class="cycle-node node-act bg-green-100 text-green-700" onclick="selectPhase('act')" id="node-act">
+                            <span class="phase-number">Phase 4</span>
+                            Act
+                        </div>
+                        <div class="cycle-node node-reflect bg-red-100 text-red-700" onclick="selectPhase('reflect')" id="node-reflect">
+                            <span class="phase-number">Phase 5</span>
+                            Reflect
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Panel -->
+                <div id="detail-panel" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div id="detail-placeholder" class="flex items-center justify-center h-full text-slate-400 text-sm">
+                        Click a phase in the diagram to explore it
+                    </div>
+                    <div id="detail-content" class="hidden">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span id="detail-badge" class="text-xs px-2 py-1 rounded uppercase tracking-wide font-bold"></span>
+                            <h3 id="detail-title" class="text-xl font-bold text-slate-900"></h3>
+                        </div>
+                        <p id="detail-desc" class="text-sm text-slate-600 mb-4"></p>
+
+                        <div class="grid grid-cols-1 gap-3 mb-4">
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">SPINE Components</div>
+                                <div id="detail-components" class="text-sm text-slate-700 font-mono"></div>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">Inputs</div>
+                                <div id="detail-inputs" class="text-sm text-slate-600"></div>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">Outputs</div>
+                                <div id="detail-outputs" class="text-sm text-slate-600"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                            <div class="text-xs font-bold text-indigo-500 uppercase mb-1">Example</div>
+                            <div id="detail-example" class="text-sm text-indigo-700 italic"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Phase Mapping Table -->
+        <section class="mb-10">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Phase &harr; Component Mapping</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                            <th class="text-left px-4 py-3 font-bold text-slate-700 w-32">Phase</th>
+                            <th class="text-left px-4 py-3 font-bold text-slate-700">SPINE Components</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-slate-100 hover:bg-blue-50/30 cursor-pointer" onclick="selectPhase('observe')">
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                                    <span class="font-medium text-blue-700">Observe</span>
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 font-mono text-xs text-slate-600">ContextDiscoveryEngine, EphemeralMemory, WorkTracker</td>
+                        </tr>
+                        <tr class="border-b border-slate-100 hover:bg-purple-50/30 cursor-pointer" onclick="selectPhase('orient')">
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-purple-500"></span>
+                                    <span class="font-medium text-purple-700">Orient</span>
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 font-mono text-xs text-slate-600">MemoryFacade, PatternStore, GapTracker</td>
+                        </tr>
+                        <tr class="border-b border-slate-100 hover:bg-orange-50/30 cursor-pointer" onclick="selectPhase('decide')">
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                                    <span class="font-medium text-orange-700">Decide</span>
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 font-mono text-xs text-slate-600">CapabilityRegistry, TaskTypeRouter, TaskDecomposer</td>
+                        </tr>
+                        <tr class="border-b border-slate-100 hover:bg-green-50/30 cursor-pointer" onclick="selectPhase('act')">
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                                    <span class="font-medium text-green-700">Act</span>
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 font-mono text-xs text-slate-600">SubagentExecutor + SafeAccessGate + ToolEnvelope</td>
+                        </tr>
+                        <tr class="hover:bg-red-50/30 cursor-pointer" onclick="selectPhase('reflect')">
+                            <td class="px-4 py-3">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                                    <span class="font-medium text-red-700">Reflect</span>
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 font-mono text-xs text-slate-600">StructuredCritique, FeedbackLoop, VerdictRouter, OscillationTracker</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Cycle Simulator -->
+        <section class="mb-10">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Cycle Simulator</h2>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+
+                <div class="flex flex-col md:flex-row gap-4 mb-6">
+                    <div class="flex-1">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Goal</label>
+                        <input type="text" id="sim-goal" placeholder='e.g. "Review PR #42"' value="Review PR #42"
+                               class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400">
+                    </div>
+                    <div class="flex items-end gap-2">
+                        <button onclick="runCycle()" id="sim-run-btn"
+                                class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-6 rounded-lg transition text-sm">
+                            Run Cycle
+                        </button>
+                        <button onclick="stepCycle()" id="sim-step-btn"
+                                class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 px-6 rounded-lg transition text-sm">
+                            Step
+                        </button>
+                        <button onclick="resetCycle()" id="sim-reset-btn"
+                                class="bg-slate-100 hover:bg-slate-200 text-slate-500 font-bold py-2 px-4 rounded-lg transition text-sm">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sim stats -->
+                <div class="flex gap-4 mb-4">
+                    <div class="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 text-center">
+                        <div id="sim-cycle-count" class="text-xl font-bold text-indigo-600">0</div>
+                        <div class="text-xs text-slate-500">Cycles</div>
+                    </div>
+                    <div class="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 text-center">
+                        <div id="sim-phase-time" class="text-xl font-bold text-slate-700">--</div>
+                        <div class="text-xs text-slate-500">Phase Time</div>
+                    </div>
+                    <div class="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 text-center">
+                        <div id="sim-total-time" class="text-xl font-bold text-slate-700">0ms</div>
+                        <div class="text-xs text-slate-500">Total Time</div>
+                    </div>
+                    <div class="bg-slate-50 px-3 py-2 rounded-lg border border-slate-100 text-center flex-1">
+                        <div id="sim-status" class="text-sm font-bold text-slate-400">Ready</div>
+                        <div class="text-xs text-slate-500">Status</div>
+                    </div>
+                </div>
+
+                <!-- Sim phases -->
+                <div id="sim-phases" class="space-y-2">
+                    <div id="sim-phase-observe" class="phase-step flex items-start gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50">
+                        <span class="w-3 h-3 rounded-full bg-blue-500 mt-1 shrink-0"></span>
+                        <div class="flex-1">
+                            <div class="font-bold text-sm text-blue-700">Observe</div>
+                            <div id="sim-observe-output" class="text-xs text-slate-500 mt-1">Waiting...</div>
+                        </div>
+                        <span id="sim-observe-time" class="text-xs text-slate-400 mt-1"></span>
+                    </div>
+                    <div id="sim-phase-orient" class="phase-step flex items-start gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50">
+                        <span class="w-3 h-3 rounded-full bg-purple-500 mt-1 shrink-0"></span>
+                        <div class="flex-1">
+                            <div class="font-bold text-sm text-purple-700">Orient</div>
+                            <div id="sim-orient-output" class="text-xs text-slate-500 mt-1">Waiting...</div>
+                        </div>
+                        <span id="sim-orient-time" class="text-xs text-slate-400 mt-1"></span>
+                    </div>
+                    <div id="sim-phase-decide" class="phase-step flex items-start gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50">
+                        <span class="w-3 h-3 rounded-full bg-orange-500 mt-1 shrink-0"></span>
+                        <div class="flex-1">
+                            <div class="font-bold text-sm text-orange-700">Decide</div>
+                            <div id="sim-decide-output" class="text-xs text-slate-500 mt-1">Waiting...</div>
+                        </div>
+                        <span id="sim-decide-time" class="text-xs text-slate-400 mt-1"></span>
+                    </div>
+                    <div id="sim-phase-act" class="phase-step flex items-start gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50">
+                        <span class="w-3 h-3 rounded-full bg-green-500 mt-1 shrink-0"></span>
+                        <div class="flex-1">
+                            <div class="font-bold text-sm text-green-700">Act</div>
+                            <div id="sim-act-output" class="text-xs text-slate-500 mt-1">Waiting...</div>
+                        </div>
+                        <span id="sim-act-time" class="text-xs text-slate-400 mt-1"></span>
+                    </div>
+                    <div id="sim-phase-reflect" class="phase-step flex items-start gap-3 p-3 rounded-lg border border-slate-100 bg-slate-50">
+                        <span class="w-3 h-3 rounded-full bg-red-500 mt-1 shrink-0"></span>
+                        <div class="flex-1">
+                            <div class="font-bold text-sm text-red-700">Reflect</div>
+                            <div id="sim-reflect-output" class="text-xs text-slate-500 mt-1">Waiting...</div>
+                        </div>
+                        <span id="sim-reflect-time" class="text-xs text-slate-400 mt-1"></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Architecture Info Panel -->
+        <section class="mb-12">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Architecture</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Key Classes -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-900 text-sm mb-3">Key Classes</h3>
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <code class="text-sm font-mono text-slate-700">OODALoop</code>
+                            <span class="text-xs text-slate-400 ml-auto">Main orchestrator</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <code class="text-sm font-mono text-slate-700">OODAConfig</code>
+                            <span class="text-xs text-slate-400 ml-auto">Phase configuration</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <code class="text-sm font-mono text-slate-700">LoopContext</code>
+                            <span class="text-xs text-slate-400 ml-auto">Shared state across phases</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <code class="text-sm font-mono text-slate-700">WorldState</code>
+                            <span class="text-xs text-slate-400 ml-auto">Environment snapshot</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                            <code class="text-sm font-mono text-slate-700">Outcome</code>
+                            <span class="text-xs text-slate-400 ml-auto">Cycle result</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <h3 class="font-bold text-slate-900 text-sm mb-3">System Capabilities</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-indigo-50 p-4 rounded-lg text-center border border-indigo-100">
+                            <div class="text-2xl font-bold text-indigo-600">7</div>
+                            <div class="text-xs text-slate-500 mt-1">Embedding Providers</div>
+                        </div>
+                        <div class="bg-violet-50 p-4 rounded-lg text-center border border-violet-100">
+                            <div class="text-2xl font-bold text-violet-600">5</div>
+                            <div class="text-xs text-slate-500 mt-1">Memory Tiers</div>
+                        </div>
+                        <div class="bg-emerald-50 p-4 rounded-lg text-center border border-emerald-100">
+                            <div class="text-2xl font-bold text-emerald-600">7</div>
+                            <div class="text-xs text-slate-500 mt-1">Executor Types</div>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-lg text-center border border-orange-100">
+                            <div class="text-2xl font-bold text-orange-600">5</div>
+                            <div class="text-xs text-slate-500 mt-1">OODA Phases</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="bg-indigo-50 rounded-xl p-6 border border-indigo-100 mb-12">
+            <h3 class="font-bold text-indigo-900 text-sm uppercase tracking-wide mb-4">How the OODA Loop Works</h3>
+            <div class="text-sm text-indigo-700 space-y-3">
+                <p>
+                    <strong>OODA</strong> (Observe-Orient-Decide-Act) is a decision cycle originally developed by military strategist John Boyd.
+                    SPINE extends it with a fifth phase &mdash; <strong>Reflect</strong> &mdash; to enable continuous learning.
+                </p>
+                <div class="bg-white/50 p-3 rounded font-mono text-xs">
+                    loop = OODALoop(config)<br>
+                    outcome = await loop.run(goal, world_state)<br>
+                    # Cycles through all 5 phases, returns Outcome
+                </div>
+                <p>
+                    Each phase is handled by dedicated SPINE components. The loop runs continuously until the goal is achieved,
+                    a maximum cycle count is reached, or the <code class="bg-white/50 px-1 rounded">Reflect</code> phase determines no further progress is possible.
+                </p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                &larr; Back to SPINE Demos
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+    <script>
+        // Phase data
+        const PHASES = {
+            observe: {
+                title: 'Observe',
+                badge: 'bg-blue-100 text-blue-700',
+                borderColor: 'border-blue-400',
+                desc: 'Gather information about the current environment, task context, and available resources. This phase builds a WorldState snapshot.',
+                components: 'ContextDiscoveryEngine, EphemeralMemory, WorkTracker',
+                inputs: 'Goal statement, environment variables, file system state, prior cycle context',
+                outputs: 'WorldState snapshot, discovered context map, work items list',
+                example: 'For "Review PR #42": scans the PR diff, reads related files, checks CI status, loads prior review comments.'
+            },
+            orient: {
+                title: 'Orient',
+                badge: 'bg-purple-100 text-purple-700',
+                borderColor: 'border-purple-400',
+                desc: 'Analyze observations against stored knowledge. Match patterns, identify gaps, and build situational awareness.',
+                components: 'MemoryFacade, PatternStore, GapTracker',
+                inputs: 'WorldState snapshot, stored patterns, historical memories',
+                outputs: 'Situational assessment, matched patterns, identified knowledge gaps',
+                example: 'For "Review PR #42": matches code patterns against known anti-patterns, identifies unfamiliar APIs needing deeper review.'
+            },
+            decide: {
+                title: 'Decide',
+                badge: 'bg-orange-100 text-orange-700',
+                borderColor: 'border-orange-400',
+                desc: 'Select the best course of action based on orientation. Route to appropriate capabilities and decompose into sub-tasks.',
+                components: 'CapabilityRegistry, TaskTypeRouter, TaskDecomposer',
+                inputs: 'Situational assessment, available capabilities, task constraints',
+                outputs: 'Action plan, task decomposition tree, selected executor type',
+                example: 'For "Review PR #42": decides to run linter, check test coverage, review security implications. Decomposes into 3 sub-tasks.'
+            },
+            act: {
+                title: 'Act',
+                badge: 'bg-green-100 text-green-700',
+                borderColor: 'border-green-400',
+                desc: 'Execute the decided actions through sub-agents with safety gates and tool envelopes ensuring bounded execution.',
+                components: 'SubagentExecutor + SafeAccessGate + ToolEnvelope',
+                inputs: 'Action plan, tool permissions, safety constraints',
+                outputs: 'Execution results, tool outputs, side effects log',
+                example: 'For "Review PR #42": runs lint checks (SubagentExecutor), posts review comments (ToolEnvelope), respects repo permissions (SafeAccessGate).'
+            },
+            reflect: {
+                title: 'Reflect',
+                badge: 'bg-red-100 text-red-700',
+                borderColor: 'border-red-400',
+                desc: 'Evaluate outcomes, critique results, detect oscillation, and decide whether to loop again or finalize.',
+                components: 'StructuredCritique, FeedbackLoop, VerdictRouter, OscillationTracker',
+                inputs: 'Execution results, goal criteria, cycle history',
+                outputs: 'Verdict (continue/complete/abort), feedback for next cycle, updated patterns',
+                example: 'For "Review PR #42": checks if all review criteria are met, detects if review is going in circles, decides review is complete.'
+            }
+        };
+
+        const PHASE_ORDER = ['observe', 'orient', 'decide', 'act', 'reflect'];
+        const ARROW_COLORS = ['blue', 'purple', 'orange', 'green', 'red'];
+
+        let selectedPhase = null;
+
+        function selectPhase(phase) {
+            selectedPhase = phase;
+            const data = PHASES[phase];
+
+            // Update nodes
+            document.querySelectorAll('.cycle-node').forEach(n => n.classList.remove('active'));
+            document.getElementById('node-' + phase).classList.add('active');
+
+            // Update arrows
+            const phaseIdx = PHASE_ORDER.indexOf(phase);
+            for (let i = 0; i < 5; i++) {
+                const arrow = document.getElementById('arrow-' + i);
+                if (i === phaseIdx) {
+                    arrow.classList.add('active-arrow');
+                    arrow.style.stroke = getComputedStyle(document.getElementById('node-' + phase)).color;
+                    arrow.setAttribute('marker-end', `url(#arrowhead-${ARROW_COLORS[i]})`);
+                } else {
+                    arrow.classList.remove('active-arrow');
+                    arrow.style.stroke = '#cbd5e1';
+                    arrow.setAttribute('marker-end', 'url(#arrowhead)');
+                }
+            }
+
+            // Update detail panel
+            document.getElementById('detail-placeholder').classList.add('hidden');
+            const content = document.getElementById('detail-content');
+            content.classList.remove('hidden');
+            content.classList.add('fade-in');
+
+            document.getElementById('detail-badge').className = `text-xs px-2 py-1 rounded uppercase tracking-wide font-bold ${data.badge}`;
+            document.getElementById('detail-badge').textContent = `Phase ${phaseIdx + 1}`;
+            document.getElementById('detail-title').textContent = data.title;
+            document.getElementById('detail-desc').textContent = data.desc;
+            document.getElementById('detail-components').textContent = data.components;
+            document.getElementById('detail-inputs').textContent = data.inputs;
+            document.getElementById('detail-outputs').textContent = data.outputs;
+            document.getElementById('detail-example').textContent = data.example;
+
+            // Remove animation class after it plays
+            setTimeout(() => content.classList.remove('fade-in'), 400);
+        }
+
+        // Simulator
+        const SIM_OUTPUTS = {
+            'Review PR #42': {
+                observe: 'Scanned PR diff: 12 files changed, +340/-89 lines. CI: passing. 2 prior comments unresolved.',
+                orient: 'Matched pattern: large refactor. Gap: unfamiliar auth module. Risk: medium.',
+                decide: 'Plan: [1] Lint check, [2] Security scan on auth changes, [3] Coverage delta. Executor: fan-out.',
+                act: 'Lint: 2 warnings. Security: no issues. Coverage: +3.2%. Posted 4 inline comments.',
+                reflect: 'Verdict: COMPLETE. All criteria met. Stored pattern: auth-module-review. No oscillation.'
+            },
+            'Fix failing tests': {
+                observe: 'Test suite: 47 passing, 3 failing. Failures in: auth.test.ts, db.test.ts, api.test.ts.',
+                orient: 'Pattern match: cascading failure from DB connection timeout. Gap: unknown test fixture state.',
+                decide: 'Plan: [1] Fix DB fixture, [2] Re-run auth tests, [3] Verify API tests. Executor: sequential.',
+                act: 'Fixed DB fixture timeout (30s -> 60s). Auth tests: now passing. API tests: now passing.',
+                reflect: 'Verdict: COMPLETE. All 50 tests passing. Stored pattern: db-fixture-timeout. Cycle count: 1.'
+            },
+            'Deploy to staging': {
+                observe: 'Branch: main (3 commits ahead). Build: green. Staging env: healthy. Last deploy: 2h ago.',
+                orient: 'Pattern: standard deploy. No gaps. Risk: low (no DB migrations).',
+                decide: 'Plan: [1] Build Docker image, [2] Push to registry, [3] Rolling deploy. Executor: pipeline.',
+                act: 'Image built (sha:a3f9c2). Pushed to registry. Rolling deploy: 3/3 pods healthy.',
+                reflect: 'Verdict: COMPLETE. Health checks passing. Response times nominal. No rollback needed.'
+            }
+        };
+
+        // Fallback for custom goals
+        const DEFAULT_OUTPUTS = {
+            observe: 'Scanned environment. Found 5 relevant context items. Work tracker initialized.',
+            orient: 'Analyzed against 12 stored patterns. 2 matches found. 1 knowledge gap identified.',
+            decide: 'Generated action plan with 3 sub-tasks. Selected executor: sequential. Priority: normal.',
+            act: 'Executed 3 sub-tasks. 3/3 succeeded. No safety gate violations. 2 tool calls made.',
+            reflect: 'Verdict: COMPLETE. Goal criteria satisfied. 1 new pattern stored. No oscillation detected.'
+        };
+
+        let simState = {
+            running: false,
+            stepping: false,
+            currentPhase: -1,
+            cycleCount: 0,
+            totalTime: 0,
+            phaseStartTime: 0
+        };
+
+        function getSimOutputs() {
+            const goal = document.getElementById('sim-goal').value.trim();
+            return SIM_OUTPUTS[goal] || DEFAULT_OUTPUTS;
+        }
+
+        function resetCycle() {
+            simState = { running: false, stepping: false, currentPhase: -1, cycleCount: 0, totalTime: 0, phaseStartTime: 0 };
+
+            PHASE_ORDER.forEach(p => {
+                const el = document.getElementById('sim-phase-' + p);
+                el.classList.remove('completed', 'current', 'sim-active');
+                el.style.borderLeftColor = '';
+                document.getElementById('sim-' + p + '-output').textContent = 'Waiting...';
+                document.getElementById('sim-' + p + '-time').textContent = '';
+            });
+
+            document.getElementById('sim-cycle-count').textContent = '0';
+            document.getElementById('sim-phase-time').textContent = '--';
+            document.getElementById('sim-total-time').textContent = '0ms';
+            document.getElementById('sim-status').textContent = 'Ready';
+            document.getElementById('sim-status').className = 'text-sm font-bold text-slate-400';
+
+            document.getElementById('sim-run-btn').disabled = false;
+            document.getElementById('sim-run-btn').classList.remove('opacity-50');
+            document.getElementById('sim-step-btn').disabled = false;
+            document.getElementById('sim-step-btn').classList.remove('opacity-50');
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function activatePhase(phaseIdx) {
+            const phase = PHASE_ORDER[phaseIdx];
+            const outputs = getSimOutputs();
+            const el = document.getElementById('sim-phase-' + phase);
+            const colors = { observe: '#3b82f6', orient: '#8b5cf6', decide: '#f97316', act: '#22c55e', reflect: '#ef4444' };
+
+            // Mark previous phases as completed
+            for (let i = 0; i < phaseIdx; i++) {
+                const prev = document.getElementById('sim-phase-' + PHASE_ORDER[i]);
+                prev.classList.remove('current', 'sim-active');
+                prev.classList.add('completed');
+            }
+
+            // Activate current phase
+            el.classList.add('current', 'sim-active');
+            el.style.borderLeftColor = colors[phase];
+            el.classList.remove('completed');
+
+            // Highlight in diagram
+            selectPhase(phase);
+
+            // Update status
+            document.getElementById('sim-status').textContent = PHASES[phase].title + '...';
+            document.getElementById('sim-status').className = 'text-sm font-bold';
+            document.getElementById('sim-status').style.color = colors[phase];
+
+            const phaseTime = 400 + Math.random() * 600;
+            simState.phaseStartTime = Date.now();
+
+            await sleep(phaseTime);
+
+            const elapsed = Math.round(phaseTime);
+            simState.totalTime += elapsed;
+
+            // Show output
+            document.getElementById('sim-' + phase + '-output').textContent = outputs[phase];
+            document.getElementById('sim-' + phase + '-time').textContent = elapsed + 'ms';
+            document.getElementById('sim-phase-time').textContent = elapsed + 'ms';
+            document.getElementById('sim-total-time').textContent = simState.totalTime + 'ms';
+
+            el.classList.remove('sim-active');
+
+            simState.currentPhase = phaseIdx;
+        }
+
+        async function runCycle() {
+            if (simState.running) return;
+            simState.running = true;
+
+            const runBtn = document.getElementById('sim-run-btn');
+            const stepBtn = document.getElementById('sim-step-btn');
+            runBtn.disabled = true;
+            runBtn.classList.add('opacity-50');
+            stepBtn.disabled = true;
+            stepBtn.classList.add('opacity-50');
+
+            // Reset if completed
+            if (simState.currentPhase >= 4) {
+                resetCycle();
+            }
+
+            const startIdx = simState.currentPhase + 1;
+
+            for (let i = startIdx; i < 5; i++) {
+                await activatePhase(i);
+            }
+
+            // Mark last phase completed
+            document.getElementById('sim-phase-reflect').classList.remove('current');
+            document.getElementById('sim-phase-reflect').classList.add('completed');
+
+            simState.cycleCount++;
+            document.getElementById('sim-cycle-count').textContent = simState.cycleCount;
+            document.getElementById('sim-status').textContent = 'Complete';
+            document.getElementById('sim-status').className = 'text-sm font-bold text-emerald-600';
+            document.getElementById('sim-status').style.color = '';
+
+            simState.running = false;
+            simState.currentPhase = 4;
+            runBtn.disabled = false;
+            runBtn.classList.remove('opacity-50');
+            stepBtn.disabled = false;
+            stepBtn.classList.remove('opacity-50');
+        }
+
+        async function stepCycle() {
+            if (simState.running || simState.stepping) return;
+            simState.stepping = true;
+
+            // Reset if completed
+            if (simState.currentPhase >= 4) {
+                resetCycle();
+            }
+
+            const nextIdx = simState.currentPhase + 1;
+            await activatePhase(nextIdx);
+
+            if (nextIdx === 4) {
+                document.getElementById('sim-phase-reflect').classList.remove('current');
+                document.getElementById('sim-phase-reflect').classList.add('completed');
+                simState.cycleCount++;
+                document.getElementById('sim-cycle-count').textContent = simState.cycleCount;
+                document.getElementById('sim-status').textContent = 'Complete';
+                document.getElementById('sim-status').className = 'text-sm font-bold text-emerald-600';
+                document.getElementById('sim-status').style.color = '';
+            }
+
+            simState.stepping = false;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            resetCycle();
+        });
+    </script>
+</body>
+</html>

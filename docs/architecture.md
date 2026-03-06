@@ -206,10 +206,74 @@ root_id: "session-abc123"
 
 ---
 
+## Memory System (v0.3.29)
+
+SPINE provides a 5-tier memory architecture unified by `MemoryFacade`:
+
+| Tier | Component | Scope | Backend |
+|------|-----------|-------|---------|
+| 1 | `KVStore` | Namespace-scoped key-value | SQLite / File |
+| 2 | `Scratchpad` | Short-term task notes | In-memory |
+| 3 | `EphemeralMemory` | Session-scoped with decay | In-memory |
+| 4 | `VectorStore` | Hybrid semantic + keyword search | LanceDB + keyword |
+| 5 | `EpisodicMemory` | Goal-based episode recall | SQLite + FTS5 |
+
+`MemoryFacade` provides unified search across all tiers with score normalization. `VerdictRouter` routes AgenticLoop accept/reject/revise decisions to the appropriate tier.
+
+**Persistence backends:** `SQLitePersistence` and `FilePersistence`.
+
+**Embedding providers:** 7 providers (Local/SentenceTransformers, OpenAI, Voyage AI, ONNX Runtime, Gemini, Keyword fallback, Placeholder).
+
+**[Full Memory System Guide](memory-system.md)**
+
+---
+
+## OODA Loop (v0.3.29)
+
+Agent OS 2026 introduces an OODA-based execution loop that composes existing SPINE components into a structured cognition cycle:
+
+```
+OBSERVE --> ORIENT --> DECIDE --> ACT --> REFLECT
+   |           |          |         |         |
+   v           v          v         v         v
+WorldState  Context   TaskType   Executor  Episodic
+(facade)    Stack     Router     Framework Memory
+```
+
+- **LoopContext** tracks phase, iteration count, and cycle history
+- **WorldState** provides a unified facade over environment data; **WorldSnapshot** captures immutable point-in-time state
+- **Outcome** is the canonical result schema from any action
+- **OscillationTracker** detects stuck states during Reflect
+
+**[Full Agent OS Guide](agent-os.md)**
+
+---
+
+## System Scale (IE Cypher Metrics)
+
+| Metric | Value |
+|--------|-------|
+| Total nodes | 3,131 |
+| Total edges | 6,615 |
+| Subsystems | 15 |
+| Modules | 177 |
+
+### Hub Classes (highest fan-in)
+
+| Class | Fan-in |
+|-------|--------|
+| `ContentPipelineExecutor` | 68 |
+| `MCPSessionPool` | 50 |
+| `Task` | 47 |
+
+---
+
 ## Related Docs
 
 - [Tiered Enforcement Protocol](tiered-enforcement.md) - when to use each capability level
 - [Pattern Guide](patterns.md) - fan-out and pipeline usage
+- [Agent OS 2026](agent-os.md) - OODA loop, episodic memory, agent processes
+- [Memory System](memory-system.md) - 5-tier memory architecture
 - [Minna Memory Integration](minna-memory-integration.md) - persistent cross-session memory
 
-[← Back to Main](../README.md)
+[Back to Main](../README.md)

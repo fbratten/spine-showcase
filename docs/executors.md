@@ -1,4 +1,4 @@
-# Executor Framework (v0.3.28)
+# Executor Framework (v0.3.30)
 
 SPINE's orchestrator uses a **pluggable executor architecture** that separates task execution logic from the agentic loop. This allows swapping execution strategies without changing the core orchestration flow.
 
@@ -215,6 +215,52 @@ python -m spine.orchestrator run --project /path \
 
 ---
 
+### PlaceholderExecutor
+
+A no-op executor for testing and development. Returns a configurable static result without making any LLM calls or executing any logic.
+
+```python
+from spine.orchestrator.executors.base import PlaceholderExecutor
+
+executor = PlaceholderExecutor(
+    default_output="Placeholder result",
+    default_success=True,
+)
+result = executor.execute(task, project_path, role="implementer")
+```
+
+**Features:**
+- Zero external dependencies — no LLM calls, no MCP connections
+- Configurable success/failure responses
+- Useful for testing orchestration flows, dry runs, and pipeline validation
+
+---
+
+### ContentPipelineExecutor
+
+Handles video and content generation workflows with multi-step processing.
+
+```python
+from spine.orchestrator.executors.content_pipeline import (
+    ContentPipelineExecutor,
+    ContentPipelineConfig,
+)
+
+config = ContentPipelineConfig(
+    pipeline_stages=["research", "draft", "review", "publish"],
+    parallel_stages=True,
+)
+executor = ContentPipelineExecutor(config)
+result = executor.execute(task, project_path, role="content-creator")
+```
+
+**Features:**
+- Multi-stage content processing pipeline
+- Parallel stage execution where dependencies allow
+- Integrates with context stacks for stage-specific prompts
+
+---
+
 ## Executor Interface
 
 All executors implement the base `Executor` interface:
@@ -281,6 +327,8 @@ See [Context Stack Integration](context-stacks.md) for details on scenario files
 | **ClaudeCodeExecutor** | Full CLI capabilities, file operations | Higher overhead, subprocess management |
 | **MCPOrchestratorExecutor** | Intelligent tool routing, multi-provider | Requires external service, adds latency |
 | **SmallLLMExecutor** | Cost-optimized tasks, edge deployment | Limited model capability, needs MCP context |
+| **ContentPipelineExecutor** | Multi-stage content generation | Pipeline-specific, content workflows |
+| **PlaceholderExecutor** | Testing, dry runs, pipeline validation | No-op, returns static results |
 | **TaskTypeRouter** | Mixed workloads, automatic delegation | Adds classification step, needs routing rules |
 
 ---

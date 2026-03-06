@@ -7,6 +7,11 @@
 - [Tiered Enforcement Protocol](tiered-enforcement.md) - When to use each capability level
 - [Pattern Guide](patterns.md) - Fan-out and Pipeline usage
 
+## New in v0.3.29-v0.3.30
+
+- [Agent OS 2026](agent-os.md) - OODA loop composition, episodic memory, agent processes, task DAGs
+- [Memory System](memory-system.md) - 5-tier memory architecture unified by MemoryFacade
+
 ## New in v0.3.28
 
 - [MCP Session Pool & Self-Description](mcp-session-pool.md) - Persistent MCP sessions + 4-layer self-description generator
@@ -51,9 +56,11 @@ This architectural blueprint on production-ready multi-agent systems (from Anthr
 | **Executors** | [Executor Framework](executors.md) |
 | **Context Stacks** | [Context Stack Integration](context-stacks.md) |
 | **MCP Orchestrator** | [MCP Orchestrator Integration](mcp-orchestrator-integration.md) |
-| **Dynamic Routing (NEW)** | [Dynamic Routing](dynamic-routing.md) |
-| **SmallLLMExecutor (NEW)** | [SmallLLMExecutor](small-llm-executor.md) |
-| **MCP Session Pool (NEW)** | [MCP Session Pool](mcp-session-pool.md) |
+| **Agent OS 2026 (NEW)** | [Agent OS 2026](agent-os.md) |
+| **Memory System (NEW)** | [Memory System](memory-system.md) |
+| **Dynamic Routing** | [Dynamic Routing](dynamic-routing.md) |
+| **SmallLLMExecutor** | [SmallLLMExecutor](small-llm-executor.md) |
+| **MCP Session Pool** | [MCP Session Pool](mcp-session-pool.md) |
 | **Minna Memory** | [Minna Memory Integration](minna-memory-integration.md) |
 | **Automation** | [Agent Harness Automation](claude-code-automation.md) |
 

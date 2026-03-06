@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status](https://img.shields.io/badge/status-active-green)]()
-[![Version](https://img.shields.io/badge/version-0.3.28-blue)]()
+[![Version](https://img.shields.io/badge/version-0.3.30-blue)]()
 [![Live Site](https://img.shields.io/badge/site-live-blue)](https://fbratten.github.io/spine-showcase/)
 [![Demos](https://img.shields.io/badge/demos-7%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
 
@@ -31,6 +31,9 @@
 | 🤖 **Small LLM Support** | Orchestrate 3B-8B quantized models via MCP self-description layers |
 | 🔗 **MCP Session Pool** | Persistent MCP connections with background event loop |
 | 🧠 **Persistent Memory** | Optional Minna Memory integration for cross-session memory |
+| 🔄 **Agent OS 2026** | OODA loop composition, episodic memory, agent processes, task DAGs |
+| 🧬 **5-Tier Memory** | KVStore, Scratchpad, Ephemeral, Vector, Episodic — unified by MemoryFacade |
+| 📐 **Embedding Providers** | 7 providers (Local, OpenAI, Voyage, ONNX, Gemini, Keyword, Placeholder) |
 
 ---
 
@@ -142,7 +145,7 @@ SPINE uses a hierarchical context stack for consistent LLM interactions:
 }
 ```
 
-### Module Structure (v0.3.28)
+### Module Structure (v0.3.30)
 
 ```
 spine/
@@ -158,14 +161,36 @@ spine/
 │   ├── capability_registry.py   # Project capability scanning + S41 map
 │   ├── gap_tracker.py           # Structured gap detection and clustering
 │   └── executors/               # 7 pluggable executors
-│       ├── base.py              # Executor interface
+│       ├── base.py              # Executor interface + PlaceholderExecutor
 │       ├── subagent.py          # SubagentExecutor + context stacks
 │       ├── claude_code.py       # ClaudeCodeExecutor (CLI subprocess)
 │       ├── mcp_orchestrator.py  # MCPOrchestratorExecutor
 │       ├── content_pipeline.py  # ContentPipelineExecutor (video/content)
 │       ├── small_llm_executor.py    # SmallLLMExecutor — 3B-8B models (v0.3.27)
 │       └── mcp_session_pool.py      # MCPSessionPool — persistent sessions (v0.3.28)
-├── memory/         # kv_store, vector_store, scratchpad, session (ephemeral)
+├── agent_os/       # Agent OS 2026 (v0.3.29-v0.3.30)
+│   ├── ooda.py                  # OODALoop, OODAConfig, OODACycle, LoopContext
+│   ├── world.py                 # WorldState, WorldSnapshot
+│   ├── outcome.py               # Outcome canonical result schema
+│   └── process.py               # AgentProcess, ProcessManager
+├── memory/         # 5-tier memory system
+│   ├── kv_store.py              # Tier 1: namespace-scoped key-value
+│   ├── scratchpad.py            # Tier 2: short-term task notes
+│   ├── ephemeral.py             # Tier 3: session-scoped with decay
+│   ├── vector_store.py          # Tier 4: hybrid semantic + keyword search
+│   ├── episodic.py              # Tier 5: goal-based episode recall (v0.3.29)
+│   ├── facade.py                # MemoryFacade — unified cross-tier search
+│   ├── verdict_router.py        # Routes accept/reject/revise to tiers
+│   ├── persistence.py           # SQLitePersistence, FilePersistence
+│   └── embeddings/              # 7 embedding providers
+│       ├── base.py              # EmbeddingProvider ABC
+│       ├── local.py             # SentenceTransformers
+│       ├── openai.py            # OpenAI embeddings API
+│       ├── voyage.py            # Voyage AI (code-optimized)
+│       ├── onnx.py              # ONNX Runtime
+│       ├── gemini.py            # Google Gemini
+│       ├── keyword.py           # TF-IDF fallback
+│       └── placeholder.py       # Testing/development
 ├── grammar/        # EBNF-Rig Veda knowledge annotation
 ├── review/         # AI-powered code review
 ├── integration/    # Token-optimized MCP execution
@@ -398,7 +423,9 @@ python -m spine.api --port 8000
 | [Executor Framework](docs/executors.md) | 7 executor types including SmallLLMExecutor |
 | [Dynamic Routing](docs/dynamic-routing.md) | Task classification and executor selection (NEW v0.3.26) |
 | [SmallLLMExecutor](docs/small-llm-executor.md) | 3B-8B model orchestration via MCP self-description (NEW v0.3.27) |
-| [MCP Session Pool](docs/mcp-session-pool.md) | Persistent MCP sessions + self-description generator (NEW v0.3.28) |
+| [MCP Session Pool](docs/mcp-session-pool.md) | Persistent MCP sessions + self-description generator (v0.3.28) |
+| [Agent OS 2026](docs/agent-os.md) | OODA loop, episodic memory, agent processes, task DAGs (NEW v0.3.29-v0.3.30) |
+| [Memory System](docs/memory-system.md) | 5-tier memory architecture with MemoryFacade (NEW v0.3.29) |
 | [Context Stack Integration](docs/context-stacks.md) | YAML scenario files for prompt building |
 | [MCP Orchestrator Integration](docs/mcp-orchestrator-integration.md) | Optional intelligent tool routing |
 | [Minna Memory Integration](docs/minna-memory-integration.md) | Persistent cross-session memory |
@@ -416,6 +443,8 @@ python -m spine.api --port 8000
 
 | Version | Highlights |
 |---------|------------|
+| **0.3.30** | Agent Processes (ProcessManager), Task DAG (dependency resolution, cycle detection) |
+| **0.3.29** | Agent OS 2026 — OODA loop, EpisodicMemory, WorldState, Outcome, 7 embedding providers, MemoryFacade |
 | **0.3.28** | MCPSessionPool (persistent MCP sessions) + MCP Self-Description Generator (4-layer L0-L3) |
 | **0.3.27** | SmallLLMExecutor — orchestrate 3B-8B quantized LLMs via MCP self-description layers |
 | **0.3.26** | Dynamic Routing — TaskTypeRouter, classify_task_type, routing callbacks + Pattern C + retry/timeout |
