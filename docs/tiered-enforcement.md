@@ -117,22 +117,24 @@ SPINE Usage (Tier 3):
 
 ## Decision Flow
 
-```
-New Task
-    │
-    ├─ 1 file? ──────────────────► TIER 1
-    │
-    │ 2-5 files
-    ▼
-    ├─ Design decisions needed? ─► TIER 3 (if yes)
-    │
-    │ No
-    ▼
-    ├─ Research/UI-heavy/arch? ──► TIER 3 (if yes)
-    │
-    │ No
-    ▼
-    TIER 2
+```mermaid
+flowchart TD
+    START(["New Task"]) --> Q1{"1 file?"}
+    Q1 -- "Yes" --> T1["TIER 1"]
+    Q1 -- "No (2-5 files)" --> Q2{"Design decisions<br/>needed?"}
+    Q2 -- "Yes" --> T3a["TIER 3"]
+    Q2 -- "No" --> Q3{"Research / UI-heavy<br/>/ architecture?"}
+    Q3 -- "Yes" --> T3b["TIER 3"]
+    Q3 -- "No" --> T2["TIER 2"]
+
+    style START fill:#f59e0b,stroke:#d97706,color:#000
+    style Q1 fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style Q2 fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style Q3 fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style T1 fill:#0d9488,stroke:#0d9488,color:#fff
+    style T2 fill:#2563eb,stroke:#2563eb,color:#fff
+    style T3a fill:#7c3aed,stroke:#7c3aed,color:#fff
+    style T3b fill:#7c3aed,stroke:#7c3aed,color:#fff
 ```
 
 ---

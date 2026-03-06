@@ -14,24 +14,22 @@ In v0.3.27, SmallLLMExecutor spawned a new MCP subprocess per tool call (~110-22
 
 `MCPSessionPool` maintains persistent MCP sessions in a background thread with its own asyncio event loop, exposing a sync API to the rest of SPINE.
 
-```
-┌────────────────────────────────────────────────────────────┐
-│                    MCPSessionPool                           │
-│                                                            │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │           Background Thread (asyncio event loop)      │  │
-│  │                                                       │  │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐           │  │
-│  │  │ Session  │  │ Session  │  │ Session  │           │  │
-│  │  │ Server A │  │ Server B │  │ Server C │           │  │
-│  │  └──────────┘  └──────────┘  └──────────┘           │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                         │                                  │
-│                    Sync API Surface                         │
-│  get_session() | call_tool() | fetch_resources()           │
-│  fetch_prompt() | close_all() | reconnect()                │
-└────────────────────────────────────────────────────────────┘
-```
+<div style="background: #0f172a; border-radius: 12px; padding: 24px; font-family: Inter, system-ui, sans-serif; color: #e2e8f0; max-width: 640px; box-shadow: 0 0 24px rgba(37, 99, 235, 0.15);">
+  <div style="text-align: center; font-size: 18px; font-weight: 700; margin-bottom: 16px; color: #60a5fa;">MCPSessionPool</div>
+  <div style="background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+    <div style="text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 12px;">Background Thread (asyncio event loop)</div>
+    <div style="display: flex; gap: 12px; justify-content: center;">
+      <div style="background: #2563eb; color: #fff; padding: 10px 18px; border-radius: 8px; text-align: center; font-size: 13px; box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);">Session<br/>Server A</div>
+      <div style="background: #7c3aed; color: #fff; padding: 10px 18px; border-radius: 8px; text-align: center; font-size: 13px; box-shadow: 0 0 10px rgba(124, 58, 237, 0.4);">Session<br/>Server B</div>
+      <div style="background: #0d9488; color: #fff; padding: 10px 18px; border-radius: 8px; text-align: center; font-size: 13px; box-shadow: 0 0 10px rgba(13, 148, 136, 0.4);">Session<br/>Server C</div>
+    </div>
+  </div>
+  <div style="text-align: center; font-size: 20px; color: #475569;">&#9661;</div>
+  <div style="background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 12px; text-align: center;">
+    <div style="font-size: 14px; font-weight: 600; color: #f59e0b; margin-bottom: 6px;">Sync API Surface</div>
+    <div style="font-size: 12px; color: #94a3b8;">get_session() &middot; call_tool() &middot; fetch_resources() &middot; fetch_prompt() &middot; close_all() &middot; reconnect()</div>
+  </div>
+</div>
 
 ### Usage
 

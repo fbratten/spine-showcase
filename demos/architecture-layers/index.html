@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - Three Capability Layers</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        /* Glow effects */
+        .layer-glow-purple { filter: drop-shadow(0 0 12px rgba(168, 85, 247, 0.3)); }
+        .layer-glow-teal   { filter: drop-shadow(0 0 12px rgba(20, 184, 166, 0.3)); }
+        .layer-glow-blue   { filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.3)); }
+
+        .node-pill {
+            cursor: pointer;
+            transition: filter 0.2s ease, transform 0.2s ease;
+        }
+        .node-pill:hover {
+            filter: brightness(1.3);
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            pointer-events: none;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #e2e8f0;
+            max-width: 260px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            opacity: 0;
+            transition: opacity 0.15s ease;
+            z-index: 100;
+        }
+        .tooltip.visible { opacity: 1; }
+        .tooltip .tt-label {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .tooltip .tt-layer {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            opacity: 0.6;
+            margin-bottom: 2px;
+        }
+
+        /* Flow arrow animation */
+        @keyframes flowDown {
+            0%   { stroke-dashoffset: 24; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .flow-arrow {
+            stroke-dasharray: 8 4;
+            animation: flowDown 0.8s linear infinite;
+        }
+
+        /* Entrance animations */
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .layer-group {
+            opacity: 0;
+            animation: fadeSlideUp 0.6s ease forwards;
+        }
+        .layer-group:nth-child(1) { animation-delay: 0.1s; }
+        .layer-group:nth-child(2) { animation-delay: 0.35s; }
+        .layer-group:nth-child(3) { animation-delay: 0.6s; }
+
+        /* Dim class for click-to-highlight */
+        .dimmed { opacity: 0.15; transition: opacity 0.3s ease; }
+        .highlighted { opacity: 1; transition: opacity 0.3s ease; }
+
+        /* Reset button */
+        .reset-btn {
+            background: #1e293b;
+            border: 1px solid #475569;
+            color: #94a3b8;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .reset-btn:hover {
+            background: #334155;
+            color: #e2e8f0;
+            border-color: #64748b;
+        }
+
+        /* Legend */
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Responsive SVG */
+        #viz-container {
+            width: 100%;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+        svg { width: 100%; height: auto; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-6 border-b border-slate-700 pb-6">
+            <div class="flex items-center gap-3 mb-4 flex-wrap">
+                <span class="bg-indigo-900/60 text-indigo-300 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-600">&rarr;</span>
+                <a href="../" class="text-slate-400 hover:text-indigo-400 transition">Demos</a>
+                <span class="text-slate-600">&rarr;</span>
+                <span class="text-slate-400">Architecture Layers</span>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-bold text-white mb-2">SPINE &mdash; Three Capability Layers</h1>
+            <p class="text-base md:text-lg text-slate-400">Context engineering across Host Agents, MCP Servers, and Python orchestration.</p>
+        </header>
+
+        <!-- Controls -->
+        <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <!-- Legend -->
+            <div class="flex items-center gap-5 text-sm text-slate-400 flex-wrap">
+                <div class="flex items-center gap-2">
+                    <span class="legend-dot" style="background:#a855f7;"></span>
+                    <span>Host Agent</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="legend-dot" style="background:#14b8a6;"></span>
+                    <span>MCP Servers</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="legend-dot" style="background:#3b82f6;"></span>
+                    <span>SPINE Python</span>
+                </div>
+                <div class="flex items-center gap-2 ml-2">
+                    <svg width="30" height="12"><line x1="0" y1="6" x2="30" y2="6" stroke="#64748b" stroke-width="2" stroke-dasharray="4 3"/></svg>
+                    <span>Data flow</span>
+                </div>
+            </div>
+            <button class="reset-btn" onclick="resetView()">Reset View</button>
+        </div>
+
+        <!-- Visualization -->
+        <div id="viz-container"></div>
+
+        <!-- Tooltip -->
+        <div class="tooltip" id="tooltip"></div>
+
+        <!-- Footer hint -->
+        <p class="text-center text-slate-600 text-xs mt-4">Click a layer to highlight it. Hover nodes for details.</p>
+    </div>
+
+    <script>
+    // ─── Data ──────────────────────────────────────────────────────────
+    const layers = [
+        {
+            id: "host-agent",
+            label: "Host Agent",
+            subtitle: "Built-in subagent types",
+            color: "#a855f7",
+            colorDim: "#a855f720",
+            glowClass: "layer-glow-purple",
+            nodes: [
+                { name: "Explore",              desc: "Navigate and understand codebases through file inspection and search." },
+                { name: "Plan",                 desc: "Create structured, step-by-step plans before executing complex tasks." },
+                { name: "research-coordinator", desc: "Coordinate multi-source research tasks and synthesize findings." },
+                { name: "code-architect",       desc: "Design system architecture, APIs, and code structure." },
+                { name: "visual-tester",        desc: "Validate UI/UX through visual regression and screenshot comparison." },
+                { name: "context-engineer",     desc: "Build and manage context stacks for optimal prompt construction." },
+                { name: "general-purpose",      desc: "Flexible subagent for tasks that don't fit specialized roles." }
+            ]
+        },
+        {
+            id: "mcp-servers",
+            label: "MCP Servers",
+            subtitle: "External tools via Model Context Protocol",
+            color: "#14b8a6",
+            colorDim: "#14b8a620",
+            glowClass: "layer-glow-teal",
+            nodes: [
+                { name: "browser-mcp",         desc: "Browser automation for web scraping, testing, and interaction." },
+                { name: "next-conductor",       desc: "Orchestrate Next.js development workflows and builds." },
+                { name: "research-agent-mcp",   desc: "Dedicated research agent accessible via MCP protocol." },
+                { name: "research-notes-mcp",   desc: "Persistent research notes storage and retrieval." },
+                { name: "research-log-mcp",     desc: "Structured logging for research sessions and findings." },
+                { name: "smart-inventory",      desc: "Track and manage project assets, dependencies, and resources." },
+                { name: "minna-memory",         desc: "Persistent memory system for entities, relationships, and preferences." }
+            ]
+        },
+        {
+            id: "spine-python",
+            label: "SPINE Python",
+            subtitle: "Custom orchestration framework",
+            color: "#3b82f6",
+            colorDim: "#3b82f620",
+            glowClass: "layer-glow-blue",
+            nodes: [
+                { name: "run_scenario.py",  desc: "Entry point for executing SPINE scenarios with full tracing." },
+                { name: "fan_out()",        desc: "Parallel task execution with configurable concurrency limits." },
+                { name: "pipeline()",       desc: "Sequential stage processing with inter-stage data passing." },
+                { name: "ToolEnvelope",     desc: "Typed wrapper for tool calls with validation and retry logic." },
+                { name: "TraceScope",       desc: "Hierarchical tracing for debugging multi-step agent workflows." },
+                { name: "LogAggregator",    desc: "Collect and merge logs from parallel subagent executions." }
+            ]
+        }
+    ];
+
+    // ─── Layout Config ─────────────────────────────────────────────────
+    const cfg = {
+        svgWidth: 960,
+        layerPadX: 30,
+        layerPadY: 20,
+        layerGap: 28,
+        nodeH: 32,
+        nodeGapX: 12,
+        nodeGapY: 10,
+        nodeRx: 14,
+        headerH: 48,
+        arrowGap: 12,
+    };
+
+    // ─── Compute layout ────────────────────────────────────────────────
+    function computeLayout(totalW) {
+        const innerW = totalW - cfg.layerPadX * 2;
+        let y = 20;
+        const layerRects = [];
+
+        layers.forEach((layer, li) => {
+            // Place nodes in rows that fit within innerW
+            const rows = [];
+            let currentRow = [];
+            let rowW = 0;
+
+            layer.nodes.forEach(node => {
+                const textW = measureText(node.name);
+                const pillW = textW + 24;
+                node._pillW = pillW;
+                if (currentRow.length > 0 && rowW + cfg.nodeGapX + pillW > innerW) {
+                    rows.push(currentRow);
+                    currentRow = [node];
+                    rowW = pillW;
+                } else {
+                    if (currentRow.length > 0) rowW += cfg.nodeGapX;
+                    rowW += pillW;
+                    currentRow.push(node);
+                }
+            });
+            if (currentRow.length) rows.push(currentRow);
+
+            const contentH = cfg.headerH + rows.length * (cfg.nodeH + cfg.nodeGapY) + cfg.layerPadY;
+            const lx = cfg.layerPadX / 2;
+            const ly = y;
+            const lw = totalW - cfg.layerPadX;
+            const lh = contentH;
+
+            // Position nodes
+            let ny = ly + cfg.headerH;
+            rows.forEach(row => {
+                const totalRowW = row.reduce((s, n) => s + n._pillW, 0) + (row.length - 1) * cfg.nodeGapX;
+                let nx = lx + (lw - totalRowW) / 2;
+                row.forEach(node => {
+                    node._x = nx;
+                    node._y = ny;
+                    node._cx = nx + node._pillW / 2;
+                    node._cy = ny + cfg.nodeH / 2;
+                    nx += node._pillW + cfg.nodeGapX;
+                });
+                ny += cfg.nodeH + cfg.nodeGapY;
+            });
+
+            layerRects.push({ x: lx, y: ly, w: lw, h: lh, layer });
+            y += lh + cfg.layerGap;
+        });
+
+        return { layerRects, totalH: y + 10 };
+    }
+
+    // Measure text width (approximate)
+    const _canvas = document.createElement("canvas");
+    const _ctx2d = _canvas.getContext("2d");
+    _ctx2d.font = "500 13px Inter, sans-serif";
+    function measureText(t) { return _ctx2d.measureText(t).width; }
+
+    // ─── Render ────────────────────────────────────────────────────────
+    let activeLayer = null;
+
+    function render() {
+        const container = document.getElementById("viz-container");
+        container.innerHTML = "";
+
+        const containerW = Math.min(container.clientWidth, cfg.svgWidth);
+        const { layerRects, totalH } = computeLayout(containerW);
+
+        const svg = d3.select(container)
+            .append("svg")
+            .attr("viewBox", `0 0 ${containerW} ${totalH}`)
+            .attr("preserveAspectRatio", "xMidYMin meet");
+
+        // Defs for arrow markers
+        const defs = svg.append("defs");
+
+        // Glow filters
+        [
+            { id: "glow-purple", color: "#a855f7" },
+            { id: "glow-teal",   color: "#14b8a6" },
+            { id: "glow-blue",   color: "#3b82f6" },
+        ].forEach(g => {
+            const filter = defs.append("filter").attr("id", g.id).attr("x", "-20%").attr("y", "-20%").attr("width", "140%").attr("height", "140%");
+            filter.append("feGaussianBlur").attr("stdDeviation", "4").attr("result", "blur");
+            filter.append("feFlood").attr("flood-color", g.color).attr("flood-opacity", "0.3");
+            filter.append("feComposite").attr("in2", "blur").attr("operator", "in");
+            const merge = filter.append("feMerge");
+            merge.append("feMergeNode");
+            merge.append("feMergeNode").attr("in", "SourceGraphic");
+        });
+
+        const glowMap = { "host-agent": "glow-purple", "mcp-servers": "glow-teal", "spine-python": "glow-blue" };
+
+        // ─── Flow arrows between layers ────────────────────────────────
+        const arrowGroup = svg.append("g").attr("class", "flow-arrows");
+
+        for (let i = 0; i < layerRects.length - 1; i++) {
+            const from = layerRects[i];
+            const to = layerRects[i + 1];
+            const x1 = from.x + from.w * 0.3;
+            const x2 = from.x + from.w * 0.5;
+            const x3 = from.x + from.w * 0.7;
+            const yStart = from.y + from.h + 2;
+            const yEnd = to.y - 2;
+
+            [x1, x2, x3].forEach(x => {
+                arrowGroup.append("line")
+                    .attr("x1", x).attr("y1", yStart)
+                    .attr("x2", x).attr("y2", yEnd)
+                    .attr("stroke", "#475569")
+                    .attr("stroke-width", 2)
+                    .attr("class", "flow-arrow")
+                    .attr("data-from", from.layer.id)
+                    .attr("data-to", to.layer.id);
+
+                // Arrow head
+                const ah = 6;
+                arrowGroup.append("polygon")
+                    .attr("points", `${x},${yEnd} ${x - ah},${yEnd - ah * 1.5} ${x + ah},${yEnd - ah * 1.5}`)
+                    .attr("fill", "#475569")
+                    .attr("data-from", from.layer.id)
+                    .attr("data-to", to.layer.id);
+            });
+        }
+
+        // ─── Layer groups ──────────────────────────────────────────────
+        layerRects.forEach(({ x, y, w, h, layer }, li) => {
+            const g = svg.append("g")
+                .attr("class", "layer-group")
+                .attr("data-layer", layer.id)
+                .style("cursor", "pointer");
+
+            // Layer background
+            g.append("rect")
+                .attr("x", x).attr("y", y)
+                .attr("width", w).attr("height", h)
+                .attr("rx", 16)
+                .attr("fill", layer.colorDim)
+                .attr("stroke", layer.color)
+                .attr("stroke-width", 1.5)
+                .attr("stroke-opacity", 0.4);
+
+            // Layer label
+            g.append("text")
+                .attr("x", x + 20).attr("y", y + 24)
+                .attr("fill", layer.color)
+                .attr("font-size", "15px")
+                .attr("font-weight", "700")
+                .text(layer.label);
+
+            // Subtitle
+            g.append("text")
+                .attr("x", x + 20).attr("y", y + 40)
+                .attr("fill", "#94a3b8")
+                .attr("font-size", "11px")
+                .text(layer.subtitle);
+
+            // Click to highlight layer
+            g.on("click", (event) => {
+                event.stopPropagation();
+                if (activeLayer === layer.id) {
+                    resetView();
+                    return;
+                }
+                activeLayer = layer.id;
+                applyHighlight(layer.id);
+            });
+
+            // Node pills
+            layer.nodes.forEach(node => {
+                const ng = g.append("g")
+                    .attr("class", "node-pill")
+                    .attr("transform", `translate(${node._x}, ${node._y})`);
+
+                ng.append("rect")
+                    .attr("width", node._pillW)
+                    .attr("height", cfg.nodeH)
+                    .attr("rx", cfg.nodeRx)
+                    .attr("fill", layer.color)
+                    .attr("fill-opacity", 0.15)
+                    .attr("stroke", layer.color)
+                    .attr("stroke-width", 1)
+                    .attr("stroke-opacity", 0.5);
+
+                ng.append("text")
+                    .attr("x", node._pillW / 2)
+                    .attr("y", cfg.nodeH / 2 + 1)
+                    .attr("text-anchor", "middle")
+                    .attr("dominant-baseline", "central")
+                    .attr("fill", "#f1f5f9")
+                    .attr("font-size", "13px")
+                    .attr("font-weight", "500")
+                    .attr("font-family", "'JetBrains Mono', 'Inter', monospace")
+                    .text(node.name);
+
+                // Hover tooltip
+                ng.on("mouseenter", (event) => {
+                    const tt = document.getElementById("tooltip");
+                    tt.innerHTML = `<div class="tt-layer">${layer.label}</div><div class="tt-label">${node.name}</div><div>${node.desc}</div>`;
+                    tt.classList.add("visible");
+
+                    const rect = container.getBoundingClientRect();
+                    const px = event.clientX - rect.left + 16;
+                    const py = event.clientY - rect.top - 10;
+                    tt.style.left = Math.min(px, rect.width - 280) + "px";
+                    tt.style.top = py + "px";
+                });
+                ng.on("mousemove", (event) => {
+                    const tt = document.getElementById("tooltip");
+                    const rect = container.getBoundingClientRect();
+                    const px = event.clientX - rect.left + 16;
+                    const py = event.clientY - rect.top - 10;
+                    tt.style.left = Math.min(px, rect.width - 280) + "px";
+                    tt.style.top = py + "px";
+                });
+                ng.on("mouseleave", () => {
+                    document.getElementById("tooltip").classList.remove("visible");
+                });
+            });
+        });
+
+        // Click background to reset
+        svg.on("click", () => resetView());
+    }
+
+    function applyHighlight(layerId) {
+        d3.selectAll(".layer-group").each(function() {
+            const el = d3.select(this);
+            const isTarget = el.attr("data-layer") === layerId;
+            el.classed("highlighted", isTarget).classed("dimmed", !isTarget);
+        });
+        d3.selectAll(".flow-arrows line, .flow-arrows polygon").each(function() {
+            const el = d3.select(this);
+            const from = el.attr("data-from");
+            const to = el.attr("data-to");
+            const related = from === layerId || to === layerId;
+            el.style("opacity", related ? 1 : 0.1);
+        });
+    }
+
+    function resetView() {
+        activeLayer = null;
+        d3.selectAll(".layer-group").classed("highlighted", false).classed("dimmed", false);
+        d3.selectAll(".flow-arrows line, .flow-arrows polygon").style("opacity", 1);
+    }
+
+    // ─── Init & Resize ─────────────────────────────────────────────────
+    render();
+    let resizeTimer;
+    window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(render, 150);
+    });
+    </script>
+</body>
+</html>
