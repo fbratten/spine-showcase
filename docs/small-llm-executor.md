@@ -8,30 +8,29 @@ Orchestrate 3B-8B quantized language models via MCP self-description layers for 
 
 The SmallLLMExecutor is SPINE's 6th executor type, designed for tasks where a full-size flagship model is overkill. It wraps small, fast models (CodeLlama 7B, Qwen2.5-Coder 3B, Phi-3.5, DeepSeek-Coder) and provides them with structured MCP context to compensate for their limited capabilities.
 
-```
-┌───────────────────────────────────────────────────────────┐
-│                    SmallLLMExecutor                         │
-│                                                            │
-│  ┌────────────────────────────────────────────────────┐   │
-│  │              MCP Self-Description Layers            │   │
-│  │  L0: Instructions (server identity, tool guide)     │   │
-│  │  L1: Schema (tool parameter reference)              │   │
-│  │  L2: Resources (fetched from MCP servers)           │   │
-│  │  L3: Prompts (workflow steps from MCP servers)      │   │
-│  └──────────────────────┬─────────────────────────────┘   │
-│                         │                                  │
-│                         ▼                                  │
-│  ┌──────────────────────────────────────────────────┐     │
-│  │            Small LLM (3B-8B params)               │     │
-│  │  Ollama (local) or Anthropic Haiku (API)          │     │
-│  └──────────────────────────────────────────────────┘     │
-│                         │                                  │
-│                         ▼                                  │
-│  ┌──────────────────────────────────────────────────┐     │
-│  │         TOOL_CALL: format → MCP Execution         │     │
-│  │         via MCPSessionPool (persistent)           │     │
-│  └──────────────────────────────────────────────────┘     │
-└───────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph SLE["SmallLLMExecutor"]
+        subgraph MCP["MCP Self-Description Layers"]
+            L0["L0: Instructions — server identity, tool guide"]
+            L1["L1: Schema — tool parameter reference"]
+            L2["L2: Resources — fetched from MCP servers"]
+            L3["L3: Prompts — workflow steps from MCP servers"]
+        end
+        LLM["Small LLM 3B-8B params<br/>Ollama local or Anthropic Haiku API"]
+        EXEC["TOOL_CALL: format — MCP Execution<br/>via MCPSessionPool persistent"]
+    end
+
+    MCP --> LLM --> EXEC
+
+    style SLE fill:#0f172a,stroke:#334155,color:#e2e8f0
+    style MCP fill:#1e293b,stroke:#7c3aed,color:#e2e8f0
+    style L0 fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style L1 fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style L2 fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style L3 fill:#7c3aed,stroke:#6d28d9,color:#fff
+    style LLM fill:#2563eb,stroke:#1d4ed8,color:#fff
+    style EXEC fill:#0d9488,stroke:#0f766e,color:#fff
 ```
 
 ---

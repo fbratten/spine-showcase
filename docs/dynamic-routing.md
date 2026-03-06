@@ -8,22 +8,22 @@ SPINE can automatically classify tasks and route them to the most appropriate ex
 
 Instead of always using a single executor, Dynamic Routing analyzes each task and selects the best executor for it. Research tasks go to a research-optimized executor, code tasks go to a code-focused executor, etc.
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                     AgenticLoop                          │
-│                                                          │
-│  ┌──────────┐    ┌──────────────────┐    ┌───────────┐  │
-│  │ TaskQueue │───▶│ TaskTypeRouter   │───▶│ Evaluator │  │
-│  └──────────┘    └────────┬─────────┘    └───────────┘  │
-│                           │                              │
-│        ┌──────────────────┼──────────────────┐          │
-│        ▼                  ▼                  ▼          │
-│   ┌─────────┐      ┌──────────┐      ┌──────────┐     │
-│   │Subagent │      │ClaudeCode│      │SmallLLM  │     │
-│   │Executor │      │Executor  │      │Executor  │     │
-│   └─────────┘      └──────────┘      └──────────┘     │
-└─────────────────────────────────────────────────────────┘
-```
+<div style="font-family: 'Inter', system-ui, sans-serif; background: #0f172a; border-radius: 12px; padding: 24px; max-width: 620px; color: #e2e8f0; border: 1px solid #1e293b;">
+  <div style="text-align: center; font-weight: 700; font-size: 1.1em; color: #94a3b8; margin-bottom: 16px; letter-spacing: 0.05em;">AgenticLoop</div>
+  <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 16px;">
+    <div style="padding: 10px 18px; background: #2563eb; border-radius: 8px; font-weight: 600; box-shadow: 0 0 12px rgba(37,99,235,0.4);">TaskQueue</div>
+    <div style="font-size: 1.3em; color: #64748b;">&#10140;</div>
+    <div style="padding: 10px 18px; background: #7c3aed; border-radius: 8px; font-weight: 600; box-shadow: 0 0 12px rgba(124,58,237,0.4);">TaskTypeRouter</div>
+    <div style="font-size: 1.3em; color: #64748b;">&#10140;</div>
+    <div style="padding: 10px 18px; background: #0d9488; border-radius: 8px; font-weight: 600; box-shadow: 0 0 12px rgba(13,148,136,0.4);">Evaluator</div>
+  </div>
+  <div style="text-align: center; font-size: 1.2em; color: #64748b; margin-bottom: 12px;">&#9661; &nbsp; &#9661; &nbsp; &#9661;</div>
+  <div style="display: flex; justify-content: center; gap: 14px;">
+    <div style="flex: 1; text-align: center; padding: 12px 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155;">Subagent<br>Executor</div>
+    <div style="flex: 1; text-align: center; padding: 12px 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155;">ClaudeCode<br>Executor</div>
+    <div style="flex: 1; text-align: center; padding: 12px 10px; background: #1e293b; border-radius: 8px; border: 1px solid #334155;">SmallLLM<br>Executor</div>
+  </div>
+</div>
 
 ---
 

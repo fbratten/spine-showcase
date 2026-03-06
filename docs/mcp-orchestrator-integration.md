@@ -21,27 +21,30 @@ The `MCPOrchestratorExecutor` allows SPINE to delegate task execution to an exte
 
 The **Adaptive MCP Orchestrator Blueprint** is a standalone platform consisting of three integrated parts:
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                  Adaptive MCP Orchestrator Blueprint                     │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  ┌──────────────────────┐  ┌──────────────────────┐  ┌────────────────┐ │
-│  │   MCP Orchestrator   │  │  AI Assistant        │  │  MCP           │ │
-│  │   (Core Platform)    │  │  Integration         │  │  Meta-Router   │ │
-│  │                      │  │                      │  │                │ │
-│  │  • M1: Core Engine   │  │  • Gemini Adapter    │  │  • MCP Client  │ │
-│  │  • M2: Config        │  │  • Assistant Bridge  │  │  • Discovery   │ │
-│  │  • M3: Observability │  │  • Provider Monitor  │  │  • Registry    │ │
-│  │  • M4: Dashboard     │  │  • Multi-provider    │  │  • Router      │ │
-│  │  • M5: Learning      │  │    fallback chain    │  │  • Config      │ │
-│  │  • M6: Infrastructure│  │                      │  │                │ │
-│  └──────────────────────┘  └──────────────────────┘  └────────────────┘ │
-│                                                                          │
-│  951 tests across all modules                                           │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
-```
+<div style="font-family: 'Inter', system-ui, sans-serif; background: #0f172a; border-radius: 12px; padding: 24px; max-width: 750px; color: #e2e8f0; border: 2px solid #2563eb; box-shadow: 0 0 20px rgba(37,99,235,0.2);">
+  <div style="font-weight: 700; font-size: 1.1em; text-align: center; margin-bottom: 18px; color: #93c5fd;">Adaptive MCP Orchestrator Blueprint</div>
+  <div style="display: flex; gap: 14px; margin-bottom: 16px;">
+    <div style="flex: 1; background: #1e293b; border-radius: 10px; padding: 14px; border-left: 4px solid #2563eb;">
+      <div style="font-weight: 700; margin-bottom: 8px; color: #60a5fa;">MCP Orchestrator<br><span style="font-weight: 400; font-size: 0.85em; color: #94a3b8;">(Core Platform)</span></div>
+      <div style="font-size: 0.85em; color: #cbd5e1; line-height: 1.7;">
+        &#8226; M1: Core Engine<br>&#8226; M2: Config<br>&#8226; M3: Observability<br>&#8226; M4: Dashboard<br>&#8226; M5: Learning<br>&#8226; M6: Infrastructure
+      </div>
+    </div>
+    <div style="flex: 1; background: #1e293b; border-radius: 10px; padding: 14px; border-left: 4px solid #7c3aed;">
+      <div style="font-weight: 700; margin-bottom: 8px; color: #a78bfa;">AI Assistant<br><span style="font-weight: 400; font-size: 0.85em; color: #94a3b8;">Integration</span></div>
+      <div style="font-size: 0.85em; color: #cbd5e1; line-height: 1.7;">
+        &#8226; Gemini Adapter<br>&#8226; Assistant Bridge<br>&#8226; Provider Monitor<br>&#8226; Multi-provider<br>&nbsp;&nbsp;fallback chain
+      </div>
+    </div>
+    <div style="flex: 1; background: #1e293b; border-radius: 10px; padding: 14px; border-left: 4px solid #0d9488;">
+      <div style="font-weight: 700; margin-bottom: 8px; color: #5eead4;">MCP<br><span style="font-weight: 400; font-size: 0.85em; color: #94a3b8;">Meta-Router</span></div>
+      <div style="font-size: 0.85em; color: #cbd5e1; line-height: 1.7;">
+        &#8226; MCP Client<br>&#8226; Discovery<br>&#8226; Registry<br>&#8226; Router<br>&#8226; Config
+      </div>
+    </div>
+  </div>
+  <div style="text-align: center; font-size: 0.85em; color: #94a3b8; border-top: 1px solid #334155; padding-top: 10px;">951 tests across all modules</div>
+</div>
 
 ### The Three Parts
 
@@ -67,44 +70,35 @@ When the MCP Orchestrator receives a task:
 
 From SPINE's perspective, the Adaptive MCP Orchestrator is a **black box**:
 
-```
-┌─────────────────────────────────────┐
-│              SPINE                   │
-│                                      │
-│  Sends:                              │
-│  • Task description                  │
-│  • Required capabilities             │
-│  • Context (project, role)           │
-│                                      │
-│  Receives:                           │
-│  • Result (success/failure)          │
-│  • Output content                    │
-│  • Metadata (provider, latency)      │
-│                                      │
-└──────────────────┬──────────────────┘
-                   │
-                   │  POST /execute
-                   │  (single API call)
-                   ▼
-┌─────────────────────────────────────┐
-│    Adaptive MCP Orchestrator         │
-│    ═══════════════════════════       │
-│                                      │
-│    ┌─────────────────────────────┐  │
-│    │      BLACK BOX MAGIC        │  │
-│    │                             │  │
-│    │  • Which provider? (Claude) │  │
-│    │  • Which tools? (MCP)       │  │
-│    │  • Learn from outcome       │  │
-│    │  • Handle failures          │  │
-│    │  • Log everything           │  │
-│    │                             │  │
-│    └─────────────────────────────┘  │
-│                                      │
-│    SPINE doesn't need to know HOW   │
-│                                      │
-└─────────────────────────────────────┘
-```
+<div style="font-family: 'Inter', system-ui, sans-serif; max-width: 480px;">
+  <div style="background: #0f172a; border: 2px solid #2563eb; border-radius: 12px; padding: 20px; box-shadow: 0 0 15px rgba(37,99,235,0.3);">
+    <div style="font-weight: 700; font-size: 1.1em; color: #60a5fa; margin-bottom: 12px;">SPINE</div>
+    <div style="display: flex; gap: 20px; color: #cbd5e1; font-size: 0.9em;">
+      <div>
+        <div style="font-weight: 600; color: #94a3b8; margin-bottom: 4px;">Sends:</div>
+        &#8226; Task description<br>&#8226; Required capabilities<br>&#8226; Context (project, role)
+      </div>
+      <div>
+        <div style="font-weight: 600; color: #94a3b8; margin-bottom: 4px;">Receives:</div>
+        &#8226; Result (success/failure)<br>&#8226; Output content<br>&#8226; Metadata (provider, latency)
+      </div>
+    </div>
+  </div>
+  <div style="text-align: center; padding: 8px 0; color: #64748b; font-size: 0.85em;">
+    <div style="font-size: 1.5em;">&#9661;</div>
+    POST /execute (single API call)
+  </div>
+  <div style="background: #0f172a; border: 2px solid #7c3aed; border-radius: 12px; padding: 20px; box-shadow: 0 0 15px rgba(124,58,237,0.3);">
+    <div style="font-weight: 700; font-size: 1.1em; color: #a78bfa; margin-bottom: 12px;">Adaptive MCP Orchestrator</div>
+    <div style="background: #1e293b; border-radius: 8px; padding: 14px; border: 1px dashed #475569; margin-bottom: 12px;">
+      <div style="font-weight: 600; color: #f59e0b; margin-bottom: 8px;">BLACK BOX MAGIC</div>
+      <div style="color: #cbd5e1; font-size: 0.9em; line-height: 1.7;">
+        &#8226; Which provider? (Claude)<br>&#8226; Which tools? (MCP)<br>&#8226; Learn from outcome<br>&#8226; Handle failures<br>&#8226; Log everything
+      </div>
+    </div>
+    <div style="text-align: center; font-size: 0.85em; color: #94a3b8; font-style: italic;">SPINE doesn't need to know HOW</div>
+  </div>
+</div>
 
 ### What SPINE Sees vs What Actually Happens
 
@@ -132,43 +126,62 @@ From SPINE's perspective, the Adaptive MCP Orchestrator is a **black box**:
 
 ## Architecture (SPINE Integration)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         SPINE                                │
-│                                                              │
-│  AgenticLoop                                                 │
-│  ├── TaskQueue                                               │
-│  ├── Evaluators (Build/Test/LLM)                            │
-│  └── Executor Selection:                                     │
-│      │                                                       │
-│      ├─▶ MCPOrchestratorExecutor (if available)             │
-│      │       │                                               │
-│      │       │ health_check() ──▶ Success? ──▶ Use it       │
-│      │       │                                               │
-│      │       └──────────────────▶ Failed?  ──┐              │
-│      │                                        │              │
-│      └─▶ SubagentExecutor (fallback) ◀───────┘              │
-│                                                              │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-                           │ HTTP (only if MCP Orchestrator running)
-                           │ http://localhost:8080
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              MCP Orchestrator Blueprint                      │
-│                                                              │
-│  Core Orchestrator                                           │
-│  ├── Decision Engine (tool selection)                        │
-│  ├── Invocation Engine (tool calling)                        │
-│  └── Configurable provider bias (default: 1.5x weight)       │
-│                                                              │
-│  Supporting Modules:                                         │
-│  ├── Config Engine                                           │
-│  ├── Logging & Observability                                │
-│  ├── Dashboard (API endpoints)                              │
-│  └── Learning Layer (score boosts)                          │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph SPINE["SPINE"]
+        AL[AgenticLoop]
+        TQ[TaskQueue]
+        EV["Evaluators (Build/Test/LLM)"]
+        MCP_EX[MCPOrchestratorExecutor]
+        SUB["SubagentExecutor (fallback)"]
+
+        AL --- TQ
+        AL --- EV
+        AL --> MCP_EX
+        MCP_EX -- "health_check() &#10004; Success" --> USE["Use MCP Orchestrator"]
+        MCP_EX -. "Failed?" .-> SUB
+        AL --> SUB
+    end
+
+    USE -- "HTTP http://localhost:8080" --> MCPO
+
+    subgraph MCPO["MCP Orchestrator Blueprint"]
+        CO[Core Orchestrator]
+        DE["Decision Engine (tool selection)"]
+        IE["Invocation Engine (tool calling)"]
+        PB["Provider bias (1.5x weight)"]
+        SM[Supporting Modules]
+        CE[Config Engine]
+        LO["Logging & Observability"]
+        DB["Dashboard (API endpoints)"]
+        LL["Learning Layer (score boosts)"]
+
+        CO --- DE
+        CO --- IE
+        CO --- PB
+        SM --- CE
+        SM --- LO
+        SM --- DB
+        SM --- LL
+    end
+
+    style SPINE fill:#0f172a,stroke:#2563eb,color:#e2e8f0
+    style MCPO fill:#0f172a,stroke:#7c3aed,color:#e2e8f0
+    style AL fill:#2563eb,stroke:#1e40af,color:#fff
+    style TQ fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style EV fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style MCP_EX fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style SUB fill:#0d9488,stroke:#0f766e,color:#fff
+    style USE fill:#f59e0b,stroke:#d97706,color:#000
+    style CO fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style DE fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style IE fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style PB fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style SM fill:#ec4899,stroke:#be185d,color:#fff
+    style CE fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style LO fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style DB fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style LL fill:#1e293b,stroke:#475569,color:#e2e8f0
 ```
 
 ---

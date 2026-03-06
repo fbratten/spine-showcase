@@ -6,18 +6,35 @@ Context stacks provide **reproducible, structured prompts** for LLM interactions
 
 ## Overview
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Context Stack                            │
-├─────────────────────────────────────────────────────────────┤
-│  global      │ operator, brand identity                     │
-│  character   │ speaker persona, target audience             │
-│  command     │ task specification, success criteria         │
-│  constraints │ tone, format, do/don't rules                 │
-│  context     │ background info, references                  │
-│  input       │ user request                                 │
-└─────────────────────────────────────────────────────────────┘
-```
+<table style="border-collapse: collapse; font-family: 'Inter', system-ui, sans-serif; width: 100%; max-width: 600px;">
+  <tr>
+    <th colspan="2" style="background: #1e293b; color: #e2e8f0; padding: 12px 16px; text-align: left; font-size: 1.05em; border-radius: 8px 8px 0 0;">Context Stack</th>
+  </tr>
+  <tr>
+    <td style="background: #2563eb; color: #fff; padding: 10px 16px; font-weight: 600; width: 140px; border-bottom: 2px solid #0f172a;">global</td>
+    <td style="background: #0f172a; color: #cbd5e1; padding: 10px 16px; border-bottom: 2px solid #1e293b;">operator, brand identity</td>
+  </tr>
+  <tr>
+    <td style="background: #7c3aed; color: #fff; padding: 10px 16px; font-weight: 600; border-bottom: 2px solid #0f172a;">character</td>
+    <td style="background: #0f172a; color: #cbd5e1; padding: 10px 16px; border-bottom: 2px solid #1e293b;">speaker persona, target audience</td>
+  </tr>
+  <tr>
+    <td style="background: #ec4899; color: #fff; padding: 10px 16px; font-weight: 600; border-bottom: 2px solid #0f172a;">command</td>
+    <td style="background: #0f172a; color: #cbd5e1; padding: 10px 16px; border-bottom: 2px solid #1e293b;">task specification, success criteria</td>
+  </tr>
+  <tr>
+    <td style="background: #f59e0b; color: #000; padding: 10px 16px; font-weight: 600; border-bottom: 2px solid #0f172a;">constraints</td>
+    <td style="background: #0f172a; color: #cbd5e1; padding: 10px 16px; border-bottom: 2px solid #1e293b;">tone, format, do/don't rules</td>
+  </tr>
+  <tr>
+    <td style="background: #0d9488; color: #fff; padding: 10px 16px; font-weight: 600; border-bottom: 2px solid #0f172a;">context</td>
+    <td style="background: #0f172a; color: #cbd5e1; padding: 10px 16px; border-bottom: 2px solid #1e293b;">background info, references</td>
+  </tr>
+  <tr>
+    <td style="background: #ef4444; color: #fff; padding: 10px 16px; font-weight: 600; border-radius: 0 0 0 8px;">input</td>
+    <td style="background: #0f172a; color: #cbd5e1; padding: 10px 16px; border-radius: 0 0 8px 0;">user request</td>
+  </tr>
+</table>
 
 ---
 

@@ -39,29 +39,22 @@ This is the **General Contractor Model**:
 | Closed-loop reporting | `ToolEnvelope` result wrapping | `spine/core/envelope.py` |
 | Master Plan | Context Stack scenarios | `scenarios/*.yaml` |
 
-```
-User
-  │
-  ▼
-┌─────────────────────────────────────────────┐
-│              SPINE Orchestrator              │
-│  AgenticLoop + ToolEnvelope instrumentation │
-└──────────────────┬──────────────────────────┘
-                   │ fan_out() or pipeline()
-       ┌───────────┼───────────┐
-       ▼           ▼           ▼
-   ┌───────┐   ┌───────┐   ┌───────┐
-   │Worker │   │Worker │   │Worker │
-   │Agent 1│   │Agent 2│   │Agent 3│
-   └───┬───┘   └───┬───┘   └───┬───┘
-       │           │           │
-       └───────────┼───────────┘
-                   │ Results via ToolEnvelope
-                   ▼
-┌─────────────────────────────────────────────┐
-│         Synthesized Response to User         │
-└─────────────────────────────────────────────┘
-```
+<div style="font-family: 'Inter', system-ui, sans-serif; background: #0f172a; border-radius: 12px; padding: 24px; max-width: 600px; color: #e2e8f0;">
+  <div style="text-align: center; padding: 8px 16px; background: #1e293b; border-radius: 8px; margin-bottom: 8px; font-weight: 600;">User</div>
+  <div style="text-align: center; font-size: 1.2em;">&#9661;</div>
+  <div style="text-align: center; padding: 14px 20px; background: #2563eb; border-radius: 10px; margin: 8px 0; box-shadow: 0 0 15px rgba(37,99,235,0.4); font-weight: 700;">
+    SPINE Orchestrator<br>
+    <span style="font-size: 0.85em; font-weight: 400; opacity: 0.85;">AgenticLoop + ToolEnvelope instrumentation</span>
+  </div>
+  <div style="text-align: center; font-size: 0.85em; color: #94a3b8;">fan_out() or pipeline() &#8595;</div>
+  <div style="display: flex; justify-content: center; gap: 12px; margin: 12px 0;">
+    <div style="flex: 1; text-align: center; padding: 12px 8px; background: #7c3aed; border-radius: 8px; box-shadow: 0 0 10px rgba(124,58,237,0.3);">Worker<br>Agent 1</div>
+    <div style="flex: 1; text-align: center; padding: 12px 8px; background: #7c3aed; border-radius: 8px; box-shadow: 0 0 10px rgba(124,58,237,0.3);">Worker<br>Agent 2</div>
+    <div style="flex: 1; text-align: center; padding: 12px 8px; background: #7c3aed; border-radius: 8px; box-shadow: 0 0 10px rgba(124,58,237,0.3);">Worker<br>Agent 3</div>
+  </div>
+  <div style="text-align: center; font-size: 0.85em; color: #94a3b8;">&#8595; Results via ToolEnvelope</div>
+  <div style="text-align: center; padding: 14px 20px; background: #0d9488; border-radius: 10px; margin-top: 8px; box-shadow: 0 0 15px rgba(13,148,136,0.4); font-weight: 600;">Synthesized Response to User</div>
+</div>
 
 ---
 
@@ -182,20 +175,25 @@ result = pipeline(parent_envelope, client, steps)
 
 **Hybrid Approach in SPINE:**
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Sequential Master Plan                    │
-│                                                              │
-│  ┌──────┐    ┌──────┐    ┌──────┐    ┌─────────────────┐   │
-│  │ Plan │───▶│Build │───▶│ Host │───▶│      Test       │   │
-│  └──────┘    └──────┘    └──────┘    │  ┌───┐ ┌───┐   │   │
-│                                       │  │ 1 │ │ 2 │   │   │
-│                                       │  ├───┤ ├───┤   │   │
-│                                       │  │ 3 │ │ 4 │   │   │
-│                                       │  └───┘ └───┘   │   │
-│                                       │ (parallel burst)│   │
-│                                       └─────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph LR
+    subgraph seq["Sequential Master Plan"]
+        P[Plan] --> B[Build] --> H[Host] --> T[Test]
+        T --> T1[1]
+        T --> T2[2]
+        T --> T3[3]
+        T --> T4[4]
+    end
+
+    style seq fill:#0f172a,stroke:#475569,color:#e2e8f0
+    style P fill:#2563eb,stroke:#1e40af,color:#fff
+    style B fill:#2563eb,stroke:#1e40af,color:#fff
+    style H fill:#2563eb,stroke:#1e40af,color:#fff
+    style T fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style T1 fill:#f59e0b,stroke:#d97706,color:#000
+    style T2 fill:#f59e0b,stroke:#d97706,color:#000
+    style T3 fill:#f59e0b,stroke:#d97706,color:#000
+    style T4 fill:#f59e0b,stroke:#d97706,color:#000
 ```
 
 ---
@@ -319,15 +317,14 @@ if result.oscillating:
 # ACCEPT: Task complete, proceed
 ```
 
-```
-┌──────┐    ┌───────┐    ┌──────┐    ┌──────┐
-│ Plan │───▶│ Build │───▶│ Host │───▶│ Test │
-└──────┘    └───┬───┘    └──────┘    └──┬───┘
-                │                        │
-                │    ┌──────────────┐    │
-                └────│ REVISE Loop  │◀───┘
-                     │ (on failure) │
-                     └──────────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> Plan
+    Plan --> Build
+    Build --> Host
+    Host --> Test
+    Test --> Build : REVISE (on failure)
+    Test --> [*] : ACCEPT
 ```
 
 ---
@@ -436,28 +433,30 @@ SPINE embodies this philosophy. It's not a tool for building one application—i
 
 **SPINE's value proposition:**
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        SPINE                                 │
-│  (The system that builds the application)                   │
-├─────────────────────────────────────────────────────────────┤
-│  • ToolEnvelope instrumentation                             │
-│  • TraceScope hierarchical tracing                          │
-│  • fan_out() / pipeline() orchestration                     │
-│  • AgenticLoop autonomous execution                         │
-│  • Multi-provider LLM support                               │
-│  • Structured logging & observability                       │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-        ┌─────────────────────────────────────────┐
-        │         Applications Built              │
-        │  • Golden Thread System                 │
-        │  • spine-dashboard                      │
-        │  • monitoring-solution                  │
-        │  • (your next project)                  │
-        └─────────────────────────────────────────┘
-```
+<div style="font-family: 'Inter', system-ui, sans-serif; max-width: 560px;">
+  <div style="background: #0f172a; border-radius: 12px; padding: 20px; border: 2px solid #2563eb; box-shadow: 0 0 20px rgba(37,99,235,0.3);">
+    <div style="font-weight: 700; font-size: 1.2em; color: #e2e8f0; margin-bottom: 4px;">SPINE</div>
+    <div style="font-size: 0.85em; color: #94a3b8; margin-bottom: 14px;">(The system that builds the application)</div>
+    <div style="border-top: 1px solid #334155; padding-top: 12px; color: #cbd5e1; font-size: 0.9em; line-height: 1.8;">
+      &#8226; ToolEnvelope instrumentation<br>
+      &#8226; TraceScope hierarchical tracing<br>
+      &#8226; fan_out() / pipeline() orchestration<br>
+      &#8226; AgenticLoop autonomous execution<br>
+      &#8226; Multi-provider LLM support<br>
+      &#8226; Structured logging &amp; observability
+    </div>
+  </div>
+  <div style="text-align: center; font-size: 1.5em; color: #2563eb; padding: 6px 0;">&#9661;</div>
+  <div style="background: #0f172a; border-radius: 12px; padding: 20px; border: 2px solid #0d9488; box-shadow: 0 0 20px rgba(13,148,136,0.3);">
+    <div style="font-weight: 700; color: #e2e8f0; margin-bottom: 10px;">Applications Built</div>
+    <div style="color: #cbd5e1; font-size: 0.9em; line-height: 1.8;">
+      &#8226; Golden Thread System<br>
+      &#8226; spine-dashboard<br>
+      &#8226; monitoring-solution<br>
+      &#8226; (your next project)
+    </div>
+  </div>
+</div>
 
 ---
 

@@ -6,20 +6,26 @@ SPINE's orchestrator uses a **pluggable executor architecture** that separates t
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      AgenticLoop                            │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐     │
-│  │ TaskQueue   │───▶│  Executor   │───▶│  Evaluator  │     │
-│  └─────────────┘    └──────┬──────┘    └─────────────┘     │
-│                            │                                │
-│        ┌──────────┬──────────┼──────────┬──────────┐       │
-│        ▼          ▼          ▼          ▼          ▼       │
-│  ┌──────────┐┌──────────┐┌──────────┐┌──────────┐┌──────┐│
-│  │ Subagent ││ClaudeCode││   MCP    ││ SmallLLM ││Router││
-│  │ Executor ││ Executor ││Orchestr. ││ Executor ││      ││
-│  └──────────┘└──────────┘└──────────┘└──────────┘└──────┘│
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph AgenticLoop
+        TQ[TaskQueue] --> EX[Executor] --> EV[Evaluator]
+        EX --> SE[Subagent Executor]
+        EX --> CC[ClaudeCode Executor]
+        EX --> MO[MCP Orchestrator]
+        EX --> SL[SmallLLM Executor]
+        EX --> RT[Router]
+    end
+
+    style AgenticLoop fill:#0f172a,stroke:#2563eb,color:#e2e8f0
+    style TQ fill:#2563eb,stroke:#1e40af,color:#fff
+    style EX fill:#7c3aed,stroke:#5b21b6,color:#fff
+    style EV fill:#0d9488,stroke:#0f766e,color:#fff
+    style SE fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style CC fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style MO fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style SL fill:#1e293b,stroke:#475569,color:#e2e8f0
+    style RT fill:#1e293b,stroke:#475569,color:#e2e8f0
 ```
 
 ---
