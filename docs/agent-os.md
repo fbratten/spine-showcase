@@ -1,6 +1,6 @@
-# Agent OS 2026 (v0.3.29-v0.3.30)
+# Agent OS 2026 (v0.3.29-v0.4.0)
 
-Agent OS 2026 introduces a structured cognition layer to SPINE: an OODA-based execution loop, episodic memory, embedding providers, task DAGs, and agent process management. These components compose existing SPINE subsystems into a coherent autonomous agent runtime.
+Agent OS 2026 introduces a structured cognition layer to SPINE: an OODA-based execution loop, deep memory with OODA hooks, embedding providers, task DAGs, and agent process management. These components compose existing SPINE subsystems into a coherent autonomous agent runtime.
 
 ---
 
@@ -33,10 +33,10 @@ Each OODA phase maps to an existing SPINE component:
 | Phase | Responsibility | SPINE Component |
 |-------|---------------|-----------------|
 | **Observe** | Gather current state from environment, memory, and task queue | WorldState, MemoryFacade, TaskQueue |
-| **Orient** | Analyze observations, identify patterns, assess priorities | ContextStack, EpisodicMemory (recall) |
+| **Orient** | Analyze observations, recall deep memory, assess priorities | ContextStack, MemoryHooks.orient_hook (v0.4.0) |
 | **Decide** | Select next action based on orientation | TaskTypeRouter, TieredEnforcement |
 | **Act** | Execute the chosen action via appropriate executor | Executor framework (7 executors) |
-| **Reflect** | Evaluate outcome, update memory, detect oscillation | OscillationTracker, EpisodicMemory (store) |
+| **Reflect** | Evaluate outcome, persist decisions, detect oscillation | OscillationTracker, MemoryHooks.reflect_hook (v0.4.0) |
 
 ### Core Classes
 
@@ -150,9 +150,62 @@ Episodic Memory integrates with the OODA Reflect phase: after each action cycle,
 
 ---
 
+## MemoryHooks: Deep Memory + OODA Integration (v0.4.0)
+
+`MemoryHooks` bridges the OODA loop to the deep memory subsystem (Tier 6 DeepMemoryStore + Tier 7 GraphMemory). During the Orient phase, hooks enrich the agent's situational awareness with semantically recalled knowledge, graph context, and past decisions. During Reflect, hooks persist decisions for provenance tracking.
+
+```
++--------------------------------------------------------------------+
+|                        OODA Loop + MemoryHooks                      |
+|                                                                     |
+|  OBSERVE --> ORIENT --------> DECIDE --> ACT --> REFLECT            |
+|                |                                     |              |
+|                v                                     v              |
+|       +-----------------+                  +-----------------+      |
+|       | orient_hook()   |                  | reflect_hook()  |      |
+|       |                 |                  |                 |      |
+|       | 1. Deep recall  |                  | Log decision +  |      |
+|       | 2. Graph context|                  | outcome to      |      |
+|       | 3. Past decisions|                 | deep store      |      |
+|       +-----------------+                  +-----------------+      |
+|              |                                     |                |
+|              v                                     v                |
+|       +-------------------------------------------+                 |
+|       | DeepMemoryStore (Tier 6) + GraphMemory (Tier 7)            |
+|       +-------------------------------------------+                 |
++--------------------------------------------------------------------+
+```
+
+```python
+from spine.memory.hooks import MemoryHooks
+
+hooks = MemoryHooks(deep_store=store, graph_memory=graph, episodic=episodic)
+
+# Orient: enrich with deep memory context
+enrichment = hooks.orient_hook(goal="analyze auth module", cycle=1)
+# enrichment.deep_memories     -> semantically similar memories
+# enrichment.graph_context     -> entity neighborhoods
+# enrichment.related_decisions -> past OODA decisions for this goal
+
+# Reflect: persist decision for provenance
+hooks.reflect_hook(
+    goal="analyze auth module", cycle=1,
+    decision={"action": "scan_deps"}, outcome={"success": True},
+)
+
+# Episode sync: promote episodic memories to deep store entities
+hooks.episode_sync_hook(episode_id="ep-abc123")
+```
+
+All hooks degrade gracefully -- if the deep store or graph memory is unavailable, they return empty results without errors.
+
+**[Full Deep Memory Guide](deep-memory.md)**
+
+---
+
 ## Memory System Overview
 
-Agent OS completes SPINE's memory architecture with 5 tiers unified by `MemoryFacade`:
+Agent OS completes SPINE's memory architecture with 7 tiers unified by `MemoryFacade`:
 
 | Tier | Class | Scope | Backend |
 |------|-------|-------|---------|
@@ -161,6 +214,8 @@ Agent OS completes SPINE's memory architecture with 5 tiers unified by `MemoryFa
 | 3 | `EphemeralMemory` | Session-scoped with decay | In-memory |
 | 4 | `VectorStore` | Hybrid semantic + keyword search | LanceDB + keyword |
 | 5 | `EpisodicMemory` | Goal-based episode recall | SQLite + FTS5 |
+| 6 | `DeepMemoryStore` | PostgreSQL + pgvector persistent memory | PostgreSQL + pgvector |
+| 7 | `GraphMemory` | Graph traversal + analytics | PostgreSQL + NetworkX |
 
 ```python
 from spine.memory.facade import MemoryFacade
@@ -171,9 +226,11 @@ facade = MemoryFacade(
     ephemeral=ephemeral_memory,
     vector=vector_store,
     episodic=episodic_memory,
+    deep_store=deep_store,          # Tier 6 (v0.4.0)
+    graph_memory=graph_memory,      # Tier 7 (v0.4.0)
 )
 
-# Unified search across all tiers
+# Unified search across all 7 tiers
 results = facade.search("authentication patterns", top_k=10)
 ```
 
@@ -321,7 +378,7 @@ class TaskQueue(ABC):
 |  |                    Existing SPINE Layer                          |  |
 |  |                                                                  |  |
 |  |  MemoryFacade    ContextStack    TieredEnforcement               |  |
-|  |  (5 tiers)       (YAML scenarios) (3-tier protocol)             |  |
+|  |  (7 tiers)       (YAML scenarios) (3-tier protocol)             |  |
 |  |                                                                  |  |
 |  |  ToolEnvelope    TraceScope      InstrumentedLLMClient          |  |
 |  |  (tracing)       (hierarchy)     (4 providers)                  |  |
@@ -342,9 +399,10 @@ Agent OS does not replace existing SPINE components. It composes them into a hig
 
 | Version | What Changed |
 |---------|-------------|
+| **0.4.0** | Phase 3 Deep Memory — DeepMemoryStore (Tier 6), GraphMemory (Tier 7), FederatedMemory, MemoryHooks + OODA integration |
 | **0.3.30** | Agent Processes (ProcessManager), Task DAG (dependency resolution, cycle detection) |
 | **0.3.29** | OODA Loop, LoopContext, WorldState, Outcome, EpisodicMemory, EmbeddingProviders (7) |
 
 ---
 
-[Back to Docs](README.md) | [Memory System](memory-system.md)
+[Back to Docs](README.md) | [Memory System](memory-system.md) | [Deep Memory Guide](deep-memory.md)

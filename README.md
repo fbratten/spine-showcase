@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status](https://img.shields.io/badge/status-active-green)]()
-[![Version](https://img.shields.io/badge/version-0.3.30-blue)]()
+[![Version](https://img.shields.io/badge/version-0.4.0-blue)]()
 [![Live Site](https://img.shields.io/badge/site-live-blue)](https://fbratten.github.io/spine-showcase/)
 [![Demos](https://img.shields.io/badge/demos-7%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
 
@@ -31,8 +31,8 @@
 | 🤖 **Small LLM Support** | Orchestrate 3B-8B quantized models via MCP self-description layers |
 | 🔗 **MCP Session Pool** | Persistent MCP connections with background event loop |
 | 🧠 **Persistent Memory** | Optional Minna Memory integration for cross-session memory |
-| 🔄 **Agent OS 2026** | OODA loop composition, episodic memory, agent processes, task DAGs |
-| 🧬 **5-Tier Memory** | KVStore, Scratchpad, Ephemeral, Vector, Episodic — unified by MemoryFacade |
+| 🔄 **Agent OS 2026** | OODA loop composition, deep memory hooks, agent processes, task DAGs |
+| 🧬 **7-Tier Memory** | KV, Scratchpad, Ephemeral, Vector, Episodic, DeepMemory (pgvector), GraphMemory — unified by MemoryFacade |
 | 📐 **Embedding Providers** | 7 providers (Local, OpenAI, Voyage, ONNX, Gemini, Keyword, Placeholder) |
 
 ---
@@ -145,7 +145,7 @@ SPINE uses a hierarchical context stack for consistent LLM interactions:
 }
 ```
 
-### Module Structure (v0.3.30)
+### Module Structure (v0.4.0)
 
 ```
 spine/
@@ -168,17 +168,22 @@ spine/
 │       ├── content_pipeline.py  # ContentPipelineExecutor (video/content)
 │       ├── small_llm_executor.py    # SmallLLMExecutor — 3B-8B models (v0.3.27)
 │       └── mcp_session_pool.py      # MCPSessionPool — persistent sessions (v0.3.28)
-├── agent_os/       # Agent OS 2026 (v0.3.29-v0.3.30)
+├── agent_os/       # Agent OS 2026 (v0.3.29-v0.4.0)
 │   ├── ooda.py                  # OODALoop, OODAConfig, OODACycle, LoopContext
 │   ├── world.py                 # WorldState, WorldSnapshot
 │   ├── outcome.py               # Outcome canonical result schema
 │   └── process.py               # AgentProcess, ProcessManager
-├── memory/         # 5-tier memory system
+├── memory/         # 7-tier memory system (v0.4.0)
 │   ├── kv_store.py              # Tier 1: namespace-scoped key-value
 │   ├── scratchpad.py            # Tier 2: short-term task notes
 │   ├── ephemeral.py             # Tier 3: session-scoped with decay
 │   ├── vector_store.py          # Tier 4: hybrid semantic + keyword search
 │   ├── episodic.py              # Tier 5: goal-based episode recall (v0.3.29)
+│   ├── deep_store.py            # Tier 6: PostgreSQL + pgvector deep memory (v0.4.0)
+│   ├── deep_config.py           # DeepStoreConfig (connection, decay, scoping)
+│   ├── graph_memory.py          # Tier 7: graph traversal + analytics (v0.4.0)
+│   ├── hooks.py                 # MemoryHooks — OODA orient/reflect integration (v0.4.0)
+│   ├── federated.py             # FederatedMemory — cross-project Minna queries (v0.4.0)
 │   ├── facade.py                # MemoryFacade — unified cross-tier search
 │   ├── verdict_router.py        # Routes accept/reject/revise to tiers
 │   ├── persistence.py           # SQLitePersistence, FilePersistence
@@ -424,8 +429,9 @@ python -m spine.api --port 8000
 | [Dynamic Routing](docs/dynamic-routing.md) | Task classification and executor selection (NEW v0.3.26) |
 | [SmallLLMExecutor](docs/small-llm-executor.md) | 3B-8B model orchestration via MCP self-description (NEW v0.3.27) |
 | [MCP Session Pool](docs/mcp-session-pool.md) | Persistent MCP sessions + self-description generator (v0.3.28) |
-| [Agent OS 2026](docs/agent-os.md) | OODA loop, episodic memory, agent processes, task DAGs (NEW v0.3.29-v0.3.30) |
-| [Memory System](docs/memory-system.md) | 5-tier memory architecture with MemoryFacade (NEW v0.3.29) |
+| [Agent OS 2026](docs/agent-os.md) | OODA loop, deep memory hooks, agent processes, task DAGs (v0.3.29-v0.4.0) |
+| [Memory System](docs/memory-system.md) | 7-tier memory architecture with MemoryFacade (v0.3.29-v0.4.0) |
+| [Deep Memory](docs/deep-memory.md) | PostgreSQL+pgvector deep store, graph memory, federation, OODA hooks (NEW v0.4.0) |
 | [Context Stack Integration](docs/context-stacks.md) | YAML scenario files for prompt building |
 | [MCP Orchestrator Integration](docs/mcp-orchestrator-integration.md) | Optional intelligent tool routing |
 | [Minna Memory Integration](docs/minna-memory-integration.md) | Persistent cross-session memory |
@@ -443,6 +449,7 @@ python -m spine.api --port 8000
 
 | Version | Highlights |
 |---------|------------|
+| **0.4.0** | Phase 3 Deep Memory — DeepMemoryStore (pgvector Tier 6), GraphMemory (Tier 7), FederatedMemory, MemoryHooks + OODA integration, dashboard health check |
 | **0.3.30** | Agent Processes (ProcessManager), Task DAG (dependency resolution, cycle detection) |
 | **0.3.29** | Agent OS 2026 — OODA loop, EpisodicMemory, WorldState, Outcome, 7 embedding providers, MemoryFacade |
 | **0.3.28** | MCPSessionPool (persistent MCP sessions) + MCP Self-Description Generator (4-layer L0-L3) |

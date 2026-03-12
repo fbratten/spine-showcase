@@ -7,6 +7,12 @@
 - [Tiered Enforcement Protocol](tiered-enforcement.md) - When to use each capability level
 - [Pattern Guide](patterns.md) - Fan-out and Pipeline usage
 
+## New in v0.4.0
+
+- [Deep Memory](deep-memory.md) - PostgreSQL+pgvector deep store, graph memory, cross-project federation, OODA hooks
+- [Memory System](memory-system.md) - 7-tier memory architecture unified by MemoryFacade (updated from 5 tiers)
+- [Agent OS 2026](agent-os.md) - OODA loop with deep memory hooks (updated)
+
 ## New in v0.3.29-v0.3.30
 
 - [Agent OS 2026](agent-os.md) - OODA loop composition, episodic memory, agent processes, task DAGs
@@ -56,8 +62,9 @@ This architectural blueprint on production-ready multi-agent systems (from Anthr
 | **Executors** | [Executor Framework](executors.md) |
 | **Context Stacks** | [Context Stack Integration](context-stacks.md) |
 | **MCP Orchestrator** | [MCP Orchestrator Integration](mcp-orchestrator-integration.md) |
-| **Agent OS 2026 (NEW)** | [Agent OS 2026](agent-os.md) |
-| **Memory System (NEW)** | [Memory System](memory-system.md) |
+| **Deep Memory (NEW)** | [Deep Memory](deep-memory.md) |
+| **Agent OS 2026** | [Agent OS 2026](agent-os.md) |
+| **Memory System** | [Memory System](memory-system.md) |
 | **Dynamic Routing** | [Dynamic Routing](dynamic-routing.md) |
 | **SmallLLMExecutor** | [SmallLLMExecutor](small-llm-executor.md) |
 | **MCP Session Pool** | [MCP Session Pool](mcp-session-pool.md) |

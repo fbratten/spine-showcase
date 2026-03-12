@@ -1,31 +1,33 @@
-# Memory System (v0.3.29)
+# Memory System (v0.4.0)
 
-SPINE provides a 5-tier memory architecture unified by `MemoryFacade`. Each tier serves a different temporal scope and access pattern, from fast key-value lookups to goal-based episodic recall.
+SPINE provides a 7-tier memory architecture unified by `MemoryFacade`. Each tier serves a different temporal scope and access pattern, from fast key-value lookups to graph-based relationship traversal across projects.
 
 ---
 
 ## Architecture
 
 ```
-+-------------------------------------------------------------------+
-|                       MemoryFacade                                 |
-|            Unified search across all tiers                         |
-+----------+----------+----------+----------+-----------------------+
-|  Tier 1  |  Tier 2  |  Tier 3  |  Tier 4  |       Tier 5         |
-| KVStore  |Scratchpad|Ephemeral |VectorStor|   EpisodicMemory     |
-|          |          | Memory   |    e     |                       |
-| key=val  |task notes| session  | semantic |    goal-based         |
-| by ns    |short-term| w/ decay | + keyword|    episode recall     |
-|          |          |          |          |                       |
-| SQLite/  |in-memory |in-memory | LanceDB +|   SQLite + FTS5      |
-| File     |          |          | keyword  |                       |
-+----------+----------+----------+----------+-----------------------+
-                          |
-              +-----------+-----------+
-              |     VerdictRouter     |
-              | Routes accept/reject/ |
-              | revise to correct tier|
-              +-----------------------+
++-------------------------------------------------------------------------------------+
+|                              MemoryFacade                                            |
+|               Unified search across all 7 tiers                                      |
++--------+--------+--------+--------+--------+-----------+-----------+----------------+
+| Tier 1 | Tier 2 | Tier 3 | Tier 4 | Tier 5 |  Tier 6   |  Tier 7   |                |
+|KVStore |Scratch |Ephemer | Vector |Episodic|DeepMemory | Graph     | Federated      |
+|        |  pad   |  al    | Store  |Memory  |  Store    | Memory    | Memory         |
+|        |        |        |        |        |           |           |                |
+|key=val |task    |session |semantic|goal-   |PostgreSQL | graph     | cross-project  |
+|by ns   |notes   |w/ decay|+keyword|based   |+ pgvector | traversal | Minna queries  |
+|        |        |        |        |recall  |           | + analytics|               |
+|        |        |        |        |        |           |           |                |
+|SQLite/ |in-mem  |in-mem  |LanceDB |SQLite  |PostgreSQL | PostgreSQL| MCP session    |
+|File    |        |        |+keyword|+ FTS5  |+ pgvector | + NetworkX| pool fan-out   |
++--------+--------+--------+--------+--------+-----------+-----------+----------------+
+                          |                        |
+              +-----------+-----------+    +-------+--------+
+              |     VerdictRouter     |    |  MemoryHooks   |
+              | Routes accept/reject/ |    | OODA orient +  |
+              | revise to correct tier|    | reflect wiring |
+              +-----------------------+    +----------------+
 ```
 
 ---
@@ -182,9 +184,191 @@ results = episodic.search("timeout auth")
 
 ---
 
+## Tier 6: DeepMemoryStore (v0.4.0)
+
+PostgreSQL + pgvector backed persistent memory for long-term semantic recall. Opt-in: requires PostgreSQL with the pgvector extension. Falls back gracefully (returns empty results) when unavailable.
+
+```python
+from spine.memory.deep_store import DeepMemoryStore
+from spine.memory.deep_config import DeepStoreConfig
+
+config = DeepStoreConfig(
+    enabled=True,
+    database_url="postgresql://spine:spine@localhost:5432/spine_memory",
+    embedding_provider="voyage",       # Reuses SPINE's embedding providers
+    confidence_half_life_days=90.0,    # Confidence decays over time
+    project_scope="my-project",        # Scoping for cross-project federation
+)
+store = DeepMemoryStore(config, embedding_provider=provider)
+store.init_schema()
+
+# Store a memory about an entity
+store.store_memory("AuthModule", "component", "architecture",
+                   "JWT-based with 1-hour token expiry")
+
+# Semantic vector search (pgvector cosine similarity)
+results = store.search("token expiration policy", limit=5)
+
+# Entity-scoped recall with confidence decay
+memories = store.recall("AuthModule", attribute="architecture")
+
+# Relationship graph
+store.link("AuthModule", "UserService", "CALLS")
+related = store.get_related("AuthModule", hops=2)
+
+# OODA decision logging for provenance
+store.log_decision(
+    goal="Fix auth flow", cycle_number=3, phase="act",
+    decision={"action": "refactor_jwt"}, outcome={"success": True},
+)
+```
+
+**Key features:**
+- Entity management with typed nodes, aliases, and fuzzy search (pg_trgm)
+- Semantic vector search via pgvector HNSW indexes
+- Confidence decay using a configurable half-life model
+- Relationship graph (directed entity connections with multi-hop traversal)
+- OODA decision audit trail
+- Project scoping for cross-project federation
+- Batch embedding sync for deferred embedding generation
+
+**Best for:** Long-term knowledge persistence, cross-session semantic recall, decision provenance.
+
+---
+
+## Tier 7: GraphMemory (v0.4.0)
+
+Graph traversal and analytics layer over DeepMemoryStore's relationship tables. Provides advanced graph operations without requiring a dedicated graph database.
+
+```python
+from spine.memory.graph_memory import GraphMemory
+
+graph = GraphMemory(deep_store=store)
+
+# Shortest path between entities (BFS via recursive CTE)
+path = graph.shortest_path("SPINE", "MemoryFacade")
+# GraphPath(nodes=["SPINE", "Orchestrator", "MemoryFacade"], total_weight=2)
+
+# N-hop neighborhood extraction
+hood = graph.neighborhood("AuthModule", hops=2)
+# GraphNeighborhood with all nodes and edges within 2 hops
+
+# Centrality analysis
+central = graph.central_entities(metric="degree", top_k=5)
+# [{"name": "SPINE", "degree": 42, "metric": "degree"}, ...]
+
+# Betweenness/closeness centrality (requires NetworkX)
+central = graph.central_entities(metric="betweenness", top_k=5)
+
+# Connected components and entity clustering
+components = graph.connected_components()
+clusters = graph.entity_clusters(min_cluster_size=3)
+
+# Subgraph extraction
+sub = graph.subgraph(["AuthModule", "UserService", "TokenManager"])
+
+# Graph-level statistics
+stats = graph.stats()
+# GraphStats(node_count=150, edge_count=320, density=0.014, ...)
+```
+
+**Key features:**
+- Shortest path via PostgreSQL recursive CTEs (no graph DB needed)
+- Neighborhood subgraph extraction with configurable hop depth
+- Degree centrality via SQL; betweenness/closeness via NetworkX (optional)
+- Connected component detection and density-based clustering
+- Operates on the same PostgreSQL tables as DeepMemoryStore
+
+**Best for:** Understanding entity relationships, discovering knowledge clusters, tracing dependency chains.
+
+---
+
+## FederatedMemory (v0.4.0)
+
+Read-only cross-project memory federation. Queries remote Minna MCP memory servers in parallel and returns results with full provenance metadata.
+
+```python
+from spine.memory.federated import FederatedMemory, FederatedConfig
+
+config = FederatedConfig(
+    servers={
+        "project_a_minna": {
+            "command": "uv",
+            "args_module": "minna_memory.server",
+            "cwd": "/path/to/project-a",
+        },
+        "project_b_minna": {
+            "command": "uv",
+            "args_module": "minna_memory.server",
+            "cwd": "/path/to/project-b",
+        },
+    },
+    max_results_per_server=5,
+    timeout_seconds=10,
+)
+
+fed = FederatedMemory(config=config)
+fed.open()
+
+# Search across all configured servers (parallel fan-out)
+result = fed.search("authentication patterns", limit=10)
+for hit in result.top(5):
+    print(f"[{hit.server}] {hit.entity}.{hit.attribute} = {hit.value}")
+
+# Entity-specific recall across projects
+result = fed.recall("AuthModule", attribute="architecture")
+
+fed.close()
+```
+
+**Key features:**
+- Config-whitelisted server connections (no unconstrained discovery)
+- Parallel fan-out via ThreadPoolExecutor
+- Budget controls: max servers, max results per server, timeout
+- Full provenance metadata (server, project, tool, confidence)
+- Graceful degradation: server failures are logged, not propagated
+- Local-first: SPINE's internal memory plane is always primary
+
+**Best for:** Cross-project knowledge sharing, discovering related patterns in sibling projects.
+
+---
+
+## MemoryHooks: OODA Integration (v0.4.0)
+
+`MemoryHooks` connects the OODA loop phases to the deep memory subsystem, enriching orientation with recalled knowledge and persisting decisions for provenance.
+
+```python
+from spine.memory.hooks import MemoryHooks
+
+hooks = MemoryHooks(deep_store=store, graph_memory=graph, episodic=episodic)
+
+# Orient hook: enriches OODA orientation with deep memory context
+enrichment = hooks.orient_hook(goal="analyze auth module", cycle=1)
+# OrientEnrichment with deep_memories, graph_context, related_decisions
+
+# Reflect hook: persists OODA decision to deep store
+hooks.reflect_hook(
+    goal="analyze auth module", cycle=1,
+    decision={"action": "scan_dependencies"},
+    outcome={"success": True, "files_found": 12},
+)
+
+# Episode sync: syncs completed episodes to deep store entities
+hooks.episode_sync_hook(episode_id="ep-abc123")
+```
+
+**Hook integration points:**
+- **Orient phase:** Recalls semantically similar memories, graph neighborhoods of relevant entities, and past OODA decisions for the current goal
+- **Reflect phase:** Logs decisions with full context (goal, cycle, phase, outcome) for provenance tracking
+- **Episode sync:** Creates deep store entities from completed episodic memory episodes
+
+All hooks degrade gracefully -- if the deep store or graph memory is unavailable, hooks return empty results without raising errors.
+
+---
+
 ## MemoryFacade
 
-Unified interface that searches across all 5 tiers and merges results:
+Unified interface that searches across all 7 tiers and merges results:
 
 ```python
 from spine.memory.facade import MemoryFacade
@@ -195,9 +379,11 @@ facade = MemoryFacade(
     ephemeral=ephemeral_memory,
     vector=vector_store,
     episodic=episodic_memory,
+    deep_store=deep_store,          # Tier 6 (v0.4.0)
+    graph_memory=graph_memory,      # Tier 7 (v0.4.0)
 )
 
-# Search all tiers at once
+# Search all 7 tiers at once
 results = facade.search("authentication", top_k=10)
 # Returns ranked results from whichever tiers have relevant data
 
@@ -206,7 +392,7 @@ facade.kv.get("config", "timeout_ms")
 facade.episodic.recall(goal="Fix auth bug")
 ```
 
-The facade handles score normalization across tiers so that results from different backends are comparable.
+The facade handles score normalization across tiers using source weights so that results from different backends are comparable. Deep store results use semantic similarity scores, graph results use entity-match relevance, and both are weighted alongside the existing tiers.
 
 ---
 
@@ -261,8 +447,11 @@ file = FilePersistence(path="memory/store/")
 | Remember what just happened | EphemeralMemory | Decays naturally |
 | Search documentation/knowledge | VectorStore | Semantic retrieval |
 | Learn from past executions | EpisodicMemory | Goal-based recall |
+| Long-term semantic knowledge | DeepMemoryStore | Persistent, confidence-decayed, pgvector search |
+| Trace entity relationships | GraphMemory | Shortest path, centrality, clustering |
+| Query across projects | FederatedMemory | Cross-project Minna federation |
 | Search everything at once | MemoryFacade | Cross-tier unified search |
 
 ---
 
-[Back to Docs](README.md) | [Agent OS](agent-os.md)
+[Back to Docs](README.md) | [Agent OS](agent-os.md) | [Deep Memory Guide](deep-memory.md)
