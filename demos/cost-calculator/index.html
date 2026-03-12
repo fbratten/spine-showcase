@@ -57,13 +57,9 @@
                             <div class="text-xs text-slate-400 mb-1">Anthropic</div>
                             <div class="font-bold text-slate-900 text-sm">Claude Sonnet 4.5</div>
                         </button>
-                        <button onclick="selectModel('gpt-5')" id="btn-gpt-5" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-blue-500 transition text-left">
-                            <div class="text-xs text-slate-400 mb-1">OpenAI</div>
-                            <div class="font-bold text-slate-900 text-sm">GPT-5.1</div>
-                        </button>
-                        <button onclick="selectModel('gpt-5-mini')" id="btn-gpt-5-mini" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-blue-500 transition text-left">
-                            <div class="text-xs text-slate-400 mb-1">OpenAI</div>
-                            <div class="font-bold text-slate-900 text-sm">GPT-5.1-mini</div>
+                        <button onclick="selectModel('claude-haiku')" id="btn-claude-haiku" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-violet-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">Anthropic</div>
+                            <div class="font-bold text-slate-900 text-sm">Claude Haiku 4.5.5</div>
                         </button>
                         <button onclick="selectModel('gemini-pro')" id="btn-gemini-pro" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-emerald-500 transition text-left">
                             <div class="text-xs text-slate-400 mb-1">Google</div>
@@ -73,13 +69,17 @@
                             <div class="text-xs text-slate-400 mb-1">Google</div>
                             <div class="font-bold text-slate-900 text-sm">Gemini 3 Flash</div>
                         </button>
+                        <button onclick="selectModel('gpt-5')" id="btn-gpt-5" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-blue-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">OpenAI</div>
+                            <div class="font-bold text-slate-900 text-sm">GPT-5.1</div>
+                        </button>
+                        <button onclick="selectModel('gpt-5-mini')" id="btn-gpt-5-mini" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-blue-500 transition text-left">
+                            <div class="text-xs text-slate-400 mb-1">OpenAI</div>
+                            <div class="font-bold text-slate-900 text-sm">GPT-5.1-mini</div>
+                        </button>
                         <button onclick="selectModel('grok-4')" id="btn-grok-4" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-orange-500 transition text-left">
                             <div class="text-xs text-slate-400 mb-1">xAI</div>
                             <div class="font-bold text-slate-900 text-sm">Grok 4.1</div>
-                        </button>
-                        <button onclick="selectModel('claude-haiku')" id="btn-claude-haiku" class="model-btn p-3 rounded-lg border-2 border-slate-200 hover:border-violet-500 transition text-left">
-                            <div class="text-xs text-slate-400 mb-1">Anthropic</div>
-                            <div class="font-bold text-slate-900 text-sm">Claude Haiku 4</div>
                         </button>
                     </div>
                 </div>
@@ -216,7 +216,7 @@
                 bestFor: 'Balanced performance'
             },
             'claude-haiku': {
-                name: 'Claude Haiku 4',
+                name: 'Claude Haiku 4.5',
                 provider: 'Anthropic',
                 color: 'violet',
                 input: 0.25,

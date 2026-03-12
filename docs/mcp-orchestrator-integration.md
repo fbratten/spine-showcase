@@ -51,7 +51,7 @@ The **Adaptive MCP Orchestrator Blueprint** is a standalone platform consisting 
 | Part | Purpose | Components |
 |------|---------|------------|
 | **MCP Orchestrator** | Core cognitive dispatcher | Decision engine, invocation engine, config, logging, dashboard, learning layer |
-| **AI Assistant Integration** | Multi-provider AI access | Claude (primary), GPT, Gemini adapters with automatic fallback chain |
+| **AI Assistant Integration** | Multi-provider AI access | Anthropic, Google, OpenAI adapters with configurable priority and automatic fallback chain |
 | **MCP Meta-Router** | Tool discovery and routing | MCP client, service discovery, registry, intelligent routing |
 
 ### How It Works

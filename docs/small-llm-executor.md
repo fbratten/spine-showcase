@@ -17,7 +17,7 @@ graph TD
             L2["L2: Resources — fetched from MCP servers"]
             L3["L3: Prompts — workflow steps from MCP servers"]
         end
-        LLM["Small LLM 3B-8B params<br/>Ollama local or Anthropic Haiku API"]
+        LLM["Small LLM 3B-8B params<br/>Ollama (local) or fast-tier API"]
         EXEC["TOOL_CALL: format — MCP Execution<br/>via MCPSessionPool persistent"]
     end
 
