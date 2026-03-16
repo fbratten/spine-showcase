@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - Trace Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* Tree lines */
+        .tree-connector {
+            position: relative;
+        }
+        .tree-connector::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 0;
+            height: 100%;
+            border-left: 2px solid #cbd5e1;
+        }
+        .tree-connector::after {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            width: 20px;
+            border-top: 2px solid #cbd5e1;
+        }
+
+        /* Node colors by provider */
+        .provider-anthropic { border-left-color: #6366f1; }
+        .provider-scope { border-left-color: #8b5cf6; }
+        .provider-fanout { border-left-color: #f59e0b; }
+
+        /* Timeline bar */
+        .timeline-bar {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .timeline-bar:hover {
+            filter: brightness(1.15);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        /* Active selection */
+        .node-selected {
+            ring: 2px;
+            box-shadow: 0 0 0 2px #6366f1;
+        }
+
+        /* Toggle button */
+        .view-toggle {
+            transition: all 0.2s ease;
+        }
+        .view-toggle.active {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .view-toggle:not(.active) {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+
+        /* Fade in */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
+        /* Status badges */
+        .status-ok { background-color: #dcfce7; color: #166534; }
+        .status-error { background-color: #fef2f2; color: #991b1b; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 md:p-12">
+
+    <div class="max-w-6xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-12 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">&rarr;</span>
+                <a href="../" class="text-slate-500 hover:text-indigo-600 transition">Demos</a>
+                <span class="text-slate-400">&rarr;</span>
+                <span class="text-slate-600">Trace Viewer</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Trace Viewer</h1>
+            <p class="text-lg text-slate-600">Visualize ToolEnvelope + TraceScope hierarchical tracing across agent orchestration.</p>
+        </header>
+
+        <!-- View Toggle -->
+        <section class="mb-6">
+            <div class="flex items-center gap-2">
+                <button onclick="setView('tree')" id="btn-tree" class="view-toggle active px-4 py-2 rounded-lg text-sm font-bold">
+                    Tree View
+                </button>
+                <button onclick="setView('timeline')" id="btn-timeline" class="view-toggle px-4 py-2 rounded-lg text-sm font-bold">
+                    Timeline View
+                </button>
+                <div class="ml-auto flex items-center gap-3">
+                    <select id="scenario-select" onchange="loadScenario(this.value)" class="text-sm border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                        <option value="research">Research Task</option>
+                        <option value="review">Code Review</option>
+                        <option value="deploy">Deploy Pipeline</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content: View + Detail -->
+        <section class="mb-10">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                <!-- Tree / Timeline View -->
+                <div class="lg:col-span-2">
+
+                    <!-- Tree View -->
+                    <div id="tree-view" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Trace Hierarchy</h2>
+                        <div id="tree-container" class="space-y-1">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Timeline View -->
+                    <div id="timeline-view" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hidden">
+                        <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Execution Timeline</h2>
+                        <div id="timeline-container">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Panel -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 sticky top-6">
+                        <div id="detail-placeholder" class="text-center text-slate-400 text-sm py-12">
+                            Click a node or bar to inspect trace details
+                        </div>
+                        <div id="detail-content" class="hidden fade-in">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span id="detail-status" class="text-xs px-2 py-0.5 rounded font-bold uppercase"></span>
+                                <h3 id="detail-title" class="text-lg font-bold text-slate-900 truncate"></h3>
+                            </div>
+
+                            <!-- Envelope Info -->
+                            <div class="space-y-3">
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <div class="text-xs font-bold text-slate-500 uppercase mb-2">Envelope</div>
+                                    <div class="space-y-1 mono text-xs text-slate-700">
+                                        <div class="flex justify-between"><span class="text-slate-400">id</span><span id="detail-id" class="truncate ml-2"></span></div>
+                                        <div class="flex justify-between"><span class="text-slate-400">tool</span><span id="detail-tool"></span></div>
+                                        <div class="flex justify-between"><span class="text-slate-400">type</span><span id="detail-type"></span></div>
+                                    </div>
+                                </div>
+
+                                <!-- Trace Context -->
+                                <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100">
+                                    <div class="text-xs font-bold text-indigo-500 uppercase mb-2">Trace Context</div>
+                                    <div class="space-y-1 mono text-xs text-indigo-700">
+                                        <div class="flex justify-between"><span class="text-indigo-400">root_id</span><span id="detail-root-id" class="truncate ml-2"></span></div>
+                                        <div class="flex justify-between"><span class="text-indigo-400">parent_id</span><span id="detail-parent-id" class="truncate ml-2"></span></div>
+                                        <div class="flex justify-between"><span class="text-indigo-400">span_id</span><span id="detail-span-id" class="truncate ml-2"></span></div>
+                                        <div class="flex justify-between"><span class="text-indigo-400">component</span><span id="detail-component"></span></div>
+                                    </div>
+                                </div>
+
+                                <!-- Token Usage -->
+                                <div class="bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                                    <div class="text-xs font-bold text-emerald-500 uppercase mb-2">Token Usage</div>
+                                    <div class="grid grid-cols-2 gap-2 text-center">
+                                        <div>
+                                            <div id="detail-input-tokens" class="text-lg font-bold text-emerald-700">--</div>
+                                            <div class="text-xs text-slate-500">Input</div>
+                                        </div>
+                                        <div>
+                                            <div id="detail-output-tokens" class="text-lg font-bold text-emerald-700">--</div>
+                                            <div class="text-xs text-slate-500">Output</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Timing & Cost -->
+                                <div class="bg-amber-50 p-3 rounded-lg border border-amber-100">
+                                    <div class="text-xs font-bold text-amber-600 uppercase mb-2">Timing &amp; Cost</div>
+                                    <div class="space-y-1 text-sm">
+                                        <div class="flex justify-between"><span class="text-slate-500">Duration</span><span id="detail-duration" class="font-bold text-slate-700"></span></div>
+                                        <div class="flex justify-between"><span class="text-slate-500">Started</span><span id="detail-started" class="mono text-xs text-slate-600"></span></div>
+                                        <div class="flex justify-between"><span class="text-slate-500">Cost</span><span id="detail-cost" class="font-bold text-amber-700"></span></div>
+                                    </div>
+                                </div>
+
+                                <!-- Metadata -->
+                                <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                    <div class="text-xs font-bold text-slate-500 uppercase mb-2">Metadata</div>
+                                    <div id="detail-metadata" class="flex flex-wrap gap-1">
+                                        <!-- Tags populated by JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Summary Stats -->
+        <section class="mb-10">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Trace Summary</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
+                    <div id="stat-envelopes" class="text-2xl font-bold text-indigo-600">0</div>
+                    <div class="text-xs text-slate-500">Envelopes</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
+                    <div id="stat-depth" class="text-2xl font-bold text-violet-600">0</div>
+                    <div class="text-xs text-slate-500">Max Depth</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
+                    <div id="stat-tokens" class="text-2xl font-bold text-emerald-600">0</div>
+                    <div class="text-xs text-slate-500">Total Tokens</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
+                    <div id="stat-duration" class="text-2xl font-bold text-amber-600">0ms</div>
+                    <div class="text-xs text-slate-500">Total Duration</div>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 text-center">
+                    <div id="stat-cost" class="text-2xl font-bold text-rose-600">$0.00</div>
+                    <div class="text-xs text-slate-500">Estimated Cost</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="bg-indigo-50 rounded-xl p-6 border border-indigo-100 mb-12">
+            <h3 class="font-bold text-indigo-900 text-sm uppercase tracking-wide mb-4">How Tracing Works</h3>
+            <div class="text-sm text-indigo-700 space-y-3">
+                <p>
+                    Every LLM and tool call in SPINE is wrapped in a <strong>ToolEnvelope</strong> that captures the call ID,
+                    provider, token usage, timing, and cost. Envelopes are linked into hierarchies via <strong>TraceScope</strong>,
+                    which propagates trace context (root_id, parent_id, span_id) across agent boundaries.
+                </p>
+                <div class="bg-white/50 p-3 rounded mono text-xs">
+                    with TraceScope("orchestrator") as scope:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;envelope = create_envelope(tool="anthropic:claude-opus-4-6")<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;child = envelope.create_child(tool="anthropic:claude-sonnet-4-6")<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;# child inherits root_id, links via parent_id
+                </div>
+                <p>
+                    This creates a full trace tree: orchestrator calls fan out to subagents, each subagent makes tool calls,
+                    and every step is correlated back to the root session. The <strong>ToolCallResult</strong> captures
+                    success/failure status, token counts, duration, and cost estimates.
+                </p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                &larr; Back to SPINE Demos
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+    <script>
+        // ─── Sample Trace Data ──────────────────────────────────────────
+        const SCENARIOS = {
+            research: {
+                name: 'Research Task',
+                root_id: 'trace-r8f3a1b2',
+                nodes: [
+                    {
+                        id: 'env-001', tool: 'scenario:research-task', type: 'TraceScope',
+                        trace: { root_id: 'trace-r8f3a1b2', parent_id: null, span_id: 'span-root-001', component: 'orchestrator' },
+                        status: 'ok', input_tokens: 0, output_tokens: 0,
+                        start_ms: 0, duration_ms: 12840, cost: 0,
+                        metadata: { mode: 'orchestrator', priority: 'high', scenario: 'research' },
+                        labels: ['root', 'orchestrator'],
+                        children: [
+                            {
+                                id: 'env-002', tool: 'anthropic:claude-opus-4-6', type: 'ToolEnvelope',
+                                trace: { root_id: 'trace-r8f3a1b2', parent_id: 'span-root-001', span_id: 'span-llm-002', component: 'planner' },
+                                status: 'ok', input_tokens: 2480, output_tokens: 1120,
+                                start_ms: 120, duration_ms: 3200, cost: 0.0468,
+                                metadata: { mode: 'planning', priority: 'high', model_tier: 'flagship' },
+                                labels: ['llm', 'planning'],
+                                children: []
+                            },
+                            {
+                                id: 'env-003', tool: 'fan-out:research', type: 'TraceScope',
+                                trace: { root_id: 'trace-r8f3a1b2', parent_id: 'span-root-001', span_id: 'span-fanout-003', component: 'fan_out' },
+                                status: 'ok', input_tokens: 0, output_tokens: 0,
+                                start_ms: 3400, duration_ms: 6200, cost: 0,
+                                metadata: { mode: 'parallel', workers: 2, pattern: 'fan_out' },
+                                labels: ['pattern', 'parallel'],
+                                children: [
+                                    {
+                                        id: 'env-004', tool: 'anthropic:claude-sonnet-4-6', type: 'ToolEnvelope',
+                                        trace: { root_id: 'trace-r8f3a1b2', parent_id: 'span-fanout-003', span_id: 'span-llm-004', component: 'research-agent' },
+                                        status: 'ok', input_tokens: 3200, output_tokens: 2800,
+                                        start_ms: 3500, duration_ms: 5400, cost: 0.0252,
+                                        metadata: { mode: 'research', subagent: 'research-coordinator', sources: 4 },
+                                        labels: ['llm', 'research', 'subagent'],
+                                        children: []
+                                    },
+                                    {
+                                        id: 'env-005', tool: 'anthropic:claude-haiku-4-5', type: 'ToolEnvelope',
+                                        trace: { root_id: 'trace-r8f3a1b2', parent_id: 'span-fanout-003', span_id: 'span-llm-005', component: 'summary-agent' },
+                                        status: 'ok', input_tokens: 1800, output_tokens: 640,
+                                        start_ms: 3600, duration_ms: 1800, cost: 0.0031,
+                                        metadata: { mode: 'summarize', subagent: 'summary', max_tokens: 800 },
+                                        labels: ['llm', 'summary', 'subagent'],
+                                        children: []
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'env-006', tool: 'anthropic:claude-sonnet-4-6', type: 'ToolEnvelope',
+                                trace: { root_id: 'trace-r8f3a1b2', parent_id: 'span-root-001', span_id: 'span-llm-006', component: 'synthesizer' },
+                                status: 'ok', input_tokens: 4100, output_tokens: 1950,
+                                start_ms: 9700, duration_ms: 3100, cost: 0.0273,
+                                metadata: { mode: 'synthesis', priority: 'normal', context_layers: 3 },
+                                labels: ['llm', 'synthesis'],
+                                children: []
+                            }
+                        ]
+                    }
+                ]
+            },
+            review: {
+                name: 'Code Review',
+                root_id: 'trace-c4e7b9d1',
+                nodes: [
+                    {
+                        id: 'env-r01', tool: 'scenario:code-review', type: 'TraceScope',
+                        trace: { root_id: 'trace-c4e7b9d1', parent_id: null, span_id: 'span-root-r01', component: 'orchestrator' },
+                        status: 'ok', input_tokens: 0, output_tokens: 0,
+                        start_ms: 0, duration_ms: 9600, cost: 0,
+                        metadata: { mode: 'orchestrator', priority: 'high', scenario: 'code-review' },
+                        labels: ['root', 'orchestrator'],
+                        children: [
+                            {
+                                id: 'env-r02', tool: 'anthropic:claude-opus-4-6', type: 'ToolEnvelope',
+                                trace: { root_id: 'trace-c4e7b9d1', parent_id: 'span-root-r01', span_id: 'span-llm-r02', component: 'diff-analyzer' },
+                                status: 'ok', input_tokens: 5200, output_tokens: 1800,
+                                start_ms: 80, duration_ms: 4200, cost: 0.0840,
+                                metadata: { mode: 'analysis', files_changed: 12, lines_added: 340 },
+                                labels: ['llm', 'analysis'],
+                                children: []
+                            },
+                            {
+                                id: 'env-r03', tool: 'fan-out:review-personas', type: 'TraceScope',
+                                trace: { root_id: 'trace-c4e7b9d1', parent_id: 'span-root-r01', span_id: 'span-fanout-r03', component: 'multi_reviewer' },
+                                status: 'ok', input_tokens: 0, output_tokens: 0,
+                                start_ms: 4400, duration_ms: 3800, cost: 0,
+                                metadata: { mode: 'parallel', workers: 3, pattern: 'fan_out' },
+                                labels: ['pattern', 'parallel'],
+                                children: [
+                                    {
+                                        id: 'env-r04', tool: 'anthropic:claude-sonnet-4-6', type: 'ToolEnvelope',
+                                        trace: { root_id: 'trace-c4e7b9d1', parent_id: 'span-fanout-r03', span_id: 'span-llm-r04', component: 'security-reviewer' },
+                                        status: 'ok', input_tokens: 3100, output_tokens: 920,
+                                        start_ms: 4500, duration_ms: 2800, cost: 0.0172,
+                                        metadata: { persona: 'security', severity_found: 'low' },
+                                        labels: ['llm', 'review', 'security'],
+                                        children: []
+                                    },
+                                    {
+                                        id: 'env-r05', tool: 'anthropic:claude-sonnet-4-6', type: 'ToolEnvelope',
+                                        trace: { root_id: 'trace-c4e7b9d1', parent_id: 'span-fanout-r03', span_id: 'span-llm-r05', component: 'perf-reviewer' },
+                                        status: 'error', input_tokens: 2900, output_tokens: 0,
+                                        start_ms: 4600, duration_ms: 3500, cost: 0.0087,
+                                        metadata: { persona: 'performance', error: 'timeout after 3500ms' },
+                                        labels: ['llm', 'review', 'performance', 'error'],
+                                        children: []
+                                    },
+                                    {
+                                        id: 'env-r06', tool: 'anthropic:claude-haiku-4-5', type: 'ToolEnvelope',
+                                        trace: { root_id: 'trace-c4e7b9d1', parent_id: 'span-fanout-r03', span_id: 'span-llm-r06', component: 'style-reviewer' },
+                                        status: 'ok', input_tokens: 2400, output_tokens: 580,
+                                        start_ms: 4550, duration_ms: 1200, cost: 0.0038,
+                                        metadata: { persona: 'style', findings: 3 },
+                                        labels: ['llm', 'review', 'style'],
+                                        children: []
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'env-r07', tool: 'anthropic:claude-sonnet-4-6', type: 'ToolEnvelope',
+                                trace: { root_id: 'trace-c4e7b9d1', parent_id: 'span-root-r01', span_id: 'span-llm-r07', component: 'aggregator' },
+                                status: 'ok', input_tokens: 2200, output_tokens: 1100,
+                                start_ms: 8300, duration_ms: 1250, cost: 0.0144,
+                                metadata: { mode: 'aggregation', findings_merged: 6 },
+                                labels: ['llm', 'aggregation'],
+                                children: []
+                            }
+                        ]
+                    }
+                ]
+            },
+            deploy: {
+                name: 'Deploy Pipeline',
+                root_id: 'trace-d2a5f8c3',
+                nodes: [
+                    {
+                        id: 'env-d01', tool: 'scenario:deploy-staging', type: 'TraceScope',
+                        trace: { root_id: 'trace-d2a5f8c3', parent_id: null, span_id: 'span-root-d01', component: 'orchestrator' },
+                        status: 'ok', input_tokens: 0, output_tokens: 0,
+                        start_ms: 0, duration_ms: 8400, cost: 0,
+                        metadata: { mode: 'orchestrator', priority: 'critical', scenario: 'deploy' },
+                        labels: ['root', 'orchestrator'],
+                        children: [
+                            {
+                                id: 'env-d02', tool: 'anthropic:claude-sonnet-4-6', type: 'ToolEnvelope',
+                                trace: { root_id: 'trace-d2a5f8c3', parent_id: 'span-root-d01', span_id: 'span-llm-d02', component: 'pre-check' },
+                                status: 'ok', input_tokens: 1800, output_tokens: 420,
+                                start_ms: 50, duration_ms: 1600, cost: 0.0096,
+                                metadata: { mode: 'validation', checks: ['tests', 'lint', 'build'] },
+                                labels: ['llm', 'validation'],
+                                children: []
+                            },
+                            {
+                                id: 'env-d03', tool: 'pipeline:deploy-stages', type: 'TraceScope',
+                                trace: { root_id: 'trace-d2a5f8c3', parent_id: 'span-root-d01', span_id: 'span-pipe-d03', component: 'pipeline' },
+                                status: 'ok', input_tokens: 0, output_tokens: 0,
+                                start_ms: 1700, duration_ms: 5200, cost: 0,
+                                metadata: { mode: 'sequential', pattern: 'pipeline', stages: 3 },
+                                labels: ['pattern', 'sequential'],
+                                children: [
+                                    {
+                                        id: 'env-d04', tool: 'anthropic:claude-haiku-4-5', type: 'ToolEnvelope',
+                                        trace: { root_id: 'trace-d2a5f8c3', parent_id: 'span-pipe-d03', span_id: 'span-llm-d04', component: 'build-stage' },
+                                        status: 'ok', input_tokens: 1200, output_tokens: 380,
+                                        start_ms: 1800, duration_ms: 1400, cost: 0.0020,
+                                        metadata: { stage: 'build', image_sha: 'a3f9c2e1' },
+                                        labels: ['llm', 'build'],
+                                        children: []
+                                    },
+                                    {
+                                        id: 'env-d05', tool: 'anthropic:claude-haiku-4-5', type: 'ToolEnvelope',
+                                        trace: { root_id: 'trace-d2a5f8c3', parent_id: 'span-pipe-d03', span_id: 'span-llm-d05', component: 'push-stage' },
+                                        status: 'ok', input_tokens: 800, output_tokens: 240,
+                                        start_ms: 3300, duration_ms: 1800, cost: 0.0013,
+                                        metadata: { stage: 'push', registry: 'ghcr.io' },
+                                        labels: ['llm', 'push'],
+                                        children: []
+                                    },
+                                    {
+                                        id: 'env-d06', tool: 'anthropic:claude-sonnet-4-6', type: 'ToolEnvelope',
+                                        trace: { root_id: 'trace-d2a5f8c3', parent_id: 'span-pipe-d03', span_id: 'span-llm-d06', component: 'deploy-stage' },
+                                        status: 'ok', input_tokens: 1400, output_tokens: 520,
+                                        start_ms: 5200, duration_ms: 1650, cost: 0.0084,
+                                        metadata: { stage: 'deploy', pods: '3/3 healthy', strategy: 'rolling' },
+                                        labels: ['llm', 'deploy'],
+                                        children: []
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'env-d07', tool: 'anthropic:claude-sonnet-4-6', type: 'ToolEnvelope',
+                                trace: { root_id: 'trace-d2a5f8c3', parent_id: 'span-root-d01', span_id: 'span-llm-d07', component: 'health-verifier' },
+                                status: 'ok', input_tokens: 900, output_tokens: 310,
+                                start_ms: 7000, duration_ms: 1350, cost: 0.0053,
+                                metadata: { mode: 'verification', health: 'all green', latency_p99: '42ms' },
+                                labels: ['llm', 'verification'],
+                                children: []
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        let currentView = 'tree';
+        let currentScenario = 'research';
+        let selectedNodeId = null;
+
+        // ─── Provider Colors ────────────────────────────────────────────
+        function getProviderColor(tool) {
+            if (tool.includes('opus')) return { bg: '#eef2ff', border: '#6366f1', bar: '#6366f1', text: '#4338ca', label: 'Opus' };
+            if (tool.includes('sonnet')) return { bg: '#f0fdf4', border: '#22c55e', bar: '#22c55e', text: '#166534', label: 'Sonnet' };
+            if (tool.includes('haiku')) return { bg: '#fef3c7', border: '#f59e0b', bar: '#f59e0b', text: '#92400e', label: 'Haiku' };
+            if (tool.includes('fan-out')) return { bg: '#faf5ff', border: '#a855f7', bar: '#a855f7', text: '#7c3aed', label: 'Fan-Out' };
+            if (tool.includes('pipeline')) return { bg: '#fff7ed', border: '#f97316', bar: '#f97316', text: '#c2410c', label: 'Pipeline' };
+            return { bg: '#f8fafc', border: '#94a3b8', bar: '#64748b', text: '#475569', label: 'Scope' };
+        }
+
+        // ─── Tree View ──────────────────────────────────────────────────
+        function renderTree() {
+            const container = document.getElementById('tree-container');
+            const scenario = SCENARIOS[currentScenario];
+            container.innerHTML = '';
+            renderTreeNode(container, scenario.nodes[0], 0);
+        }
+
+        function renderTreeNode(container, node, depth) {
+            const color = getProviderColor(node.tool);
+            const isSelected = selectedNodeId === node.id;
+            const indent = depth * 28;
+
+            const el = document.createElement('div');
+            el.className = 'flex items-center gap-2 py-1.5 px-2 rounded-lg cursor-pointer hover:bg-slate-50 transition' +
+                           (isSelected ? ' bg-indigo-50 ring-1 ring-indigo-300' : '');
+            el.style.paddingLeft = (indent + 8) + 'px';
+            el.onclick = (e) => { e.stopPropagation(); selectNode(node); };
+
+            // Expand indicator for nodes with children
+            const hasChildren = node.children && node.children.length > 0;
+            const expandIcon = hasChildren
+                ? '<svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>'
+                : '<span class="w-3.5 shrink-0"></span>';
+
+            // Status icon
+            const statusIcon = node.status === 'ok'
+                ? '<span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>'
+                : '<span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>';
+
+            // Depth connector lines
+            let connectors = '';
+            if (depth > 0) {
+                connectors = '<span class="text-slate-300 text-xs mr-1">' + '|'.repeat(0) + '</span>';
+            }
+
+            const typeLabel = node.type === 'TraceScope'
+                ? '<span class="text-xs px-1.5 py-0.5 rounded bg-violet-100 text-violet-600 font-medium shrink-0">Scope</span>'
+                : '<span class="text-xs px-1.5 py-0.5 rounded font-medium shrink-0" style="background:' + color.bg + ';color:' + color.text + '">' + color.label + '</span>';
+
+            el.innerHTML = `
+                ${expandIcon}
+                ${statusIcon}
+                <span class="mono text-xs text-slate-700 truncate">${node.trace.component}</span>
+                ${typeLabel}
+                <span class="mono text-xs text-slate-400 ml-auto shrink-0">${node.duration_ms}ms</span>
+                ${node.input_tokens > 0 ? '<span class="text-xs text-slate-400 shrink-0">' + formatTokens(node.input_tokens + node.output_tokens) + ' tok</span>' : ''}
+            `;
+
+            container.appendChild(el);
+
+            // Render children
+            if (hasChildren) {
+                node.children.forEach(child => renderTreeNode(container, child, depth + 1));
+            }
+        }
+
+        // ─── Timeline View ──────────────────────────────────────────────
+        function renderTimeline() {
+            const container = document.getElementById('timeline-container');
+            const scenario = SCENARIOS[currentScenario];
+            container.innerHTML = '';
+
+            // Flatten nodes for timeline
+            const flatNodes = [];
+            flattenNodes(scenario.nodes[0], flatNodes, 0);
+
+            const rootDuration = scenario.nodes[0].duration_ms;
+
+            // Time axis header
+            const axisEl = document.createElement('div');
+            axisEl.className = 'flex items-center mb-3 pb-2 border-b border-slate-100';
+            axisEl.innerHTML = `
+                <div class="w-40 shrink-0 text-xs text-slate-400 font-bold">Component</div>
+                <div class="flex-1 relative h-5">
+                    <span class="absolute left-0 text-xs text-slate-400">0ms</span>
+                    <span class="absolute left-1/4 text-xs text-slate-400">${Math.round(rootDuration / 4)}ms</span>
+                    <span class="absolute left-1/2 text-xs text-slate-400 -translate-x-1/2">${Math.round(rootDuration / 2)}ms</span>
+                    <span class="absolute left-3/4 text-xs text-slate-400">${Math.round(rootDuration * 3 / 4)}ms</span>
+                    <span class="absolute right-0 text-xs text-slate-400">${rootDuration}ms</span>
+                </div>
+            `;
+            container.appendChild(axisEl);
+
+            // Render bars
+            flatNodes.forEach(({ node, depth }) => {
+                const color = getProviderColor(node.tool);
+                const isSelected = selectedNodeId === node.id;
+                const leftPct = (node.start_ms / rootDuration) * 100;
+                const widthPct = Math.max((node.duration_ms / rootDuration) * 100, 1);
+
+                const rowEl = document.createElement('div');
+                rowEl.className = 'flex items-center py-1 group cursor-pointer' +
+                                  (isSelected ? ' bg-indigo-50 rounded-lg' : '');
+                rowEl.onclick = () => selectNode(node);
+
+                const indent = depth * 12;
+
+                rowEl.innerHTML = `
+                    <div class="w-40 shrink-0 flex items-center gap-1.5 pr-2" style="padding-left:${indent}px">
+                        <span class="w-2 h-2 rounded-full shrink-0" style="background:${color.bar}"></span>
+                        <span class="mono text-xs text-slate-600 truncate">${node.trace.component}</span>
+                    </div>
+                    <div class="flex-1 relative h-7">
+                        <div class="timeline-bar absolute h-5 top-1 flex items-center px-2"
+                             style="left:${leftPct}%; width:${widthPct}%; background:${color.bar}; opacity:0.85; min-width: 4px;">
+                            ${widthPct > 8 ? '<span class="text-white text-xs font-medium truncate">' + node.duration_ms + 'ms</span>' : ''}
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(rowEl);
+            });
+
+            // Legend
+            const legendEl = document.createElement('div');
+            legendEl.className = 'flex items-center gap-4 mt-4 pt-3 border-t border-slate-100 flex-wrap';
+            legendEl.innerHTML = `
+                <span class="text-xs text-slate-400 font-bold">Providers:</span>
+                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded" style="background:#6366f1"></span><span class="text-xs text-slate-500">Opus</span></span>
+                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded" style="background:#22c55e"></span><span class="text-xs text-slate-500">Sonnet</span></span>
+                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded" style="background:#f59e0b"></span><span class="text-xs text-slate-500">Haiku</span></span>
+                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded" style="background:#a855f7"></span><span class="text-xs text-slate-500">Fan-Out</span></span>
+                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded" style="background:#f97316"></span><span class="text-xs text-slate-500">Pipeline</span></span>
+                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded" style="background:#64748b"></span><span class="text-xs text-slate-500">Scope</span></span>
+            `;
+            container.appendChild(legendEl);
+        }
+
+        function flattenNodes(node, list, depth) {
+            list.push({ node, depth });
+            if (node.children) {
+                node.children.forEach(child => flattenNodes(child, list, depth + 1));
+            }
+        }
+
+        // ─── Detail Panel ───────────────────────────────────────────────
+        function selectNode(node) {
+            selectedNodeId = node.id;
+
+            document.getElementById('detail-placeholder').classList.add('hidden');
+            const content = document.getElementById('detail-content');
+            content.classList.remove('hidden');
+            content.classList.add('fade-in');
+            setTimeout(() => content.classList.remove('fade-in'), 300);
+
+            // Status
+            const statusEl = document.getElementById('detail-status');
+            statusEl.textContent = node.status;
+            statusEl.className = 'text-xs px-2 py-0.5 rounded font-bold uppercase ' +
+                                 (node.status === 'ok' ? 'status-ok' : 'status-error');
+
+            // Title
+            document.getElementById('detail-title').textContent = node.trace.component;
+
+            // Envelope
+            document.getElementById('detail-id').textContent = node.id;
+            document.getElementById('detail-tool').textContent = node.tool;
+            document.getElementById('detail-type').textContent = node.type;
+
+            // Trace context
+            document.getElementById('detail-root-id').textContent = node.trace.root_id;
+            document.getElementById('detail-parent-id').textContent = node.trace.parent_id || '(root)';
+            document.getElementById('detail-span-id').textContent = node.trace.span_id;
+            document.getElementById('detail-component').textContent = node.trace.component;
+
+            // Tokens
+            document.getElementById('detail-input-tokens').textContent = formatTokens(node.input_tokens);
+            document.getElementById('detail-output-tokens').textContent = formatTokens(node.output_tokens);
+
+            // Timing & Cost
+            document.getElementById('detail-duration').textContent = node.duration_ms + 'ms';
+            document.getElementById('detail-started').textContent = '+' + node.start_ms + 'ms';
+            document.getElementById('detail-cost').textContent = node.cost > 0 ? '$' + node.cost.toFixed(4) : '--';
+
+            // Metadata as tags
+            const metaEl = document.getElementById('detail-metadata');
+            metaEl.innerHTML = '';
+            Object.entries(node.metadata).forEach(([key, val]) => {
+                const tag = document.createElement('span');
+                tag.className = 'mono text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200';
+                tag.textContent = key + '=' + (typeof val === 'object' ? JSON.stringify(val) : val);
+                metaEl.appendChild(tag);
+            });
+
+            // Labels
+            if (node.labels) {
+                node.labels.forEach(label => {
+                    const tag = document.createElement('span');
+                    tag.className = 'text-xs px-2 py-0.5 rounded bg-indigo-100 text-indigo-600 font-medium';
+                    tag.textContent = label;
+                    metaEl.appendChild(tag);
+                });
+            }
+
+            // Re-render current view to update selection highlight
+            if (currentView === 'tree') renderTree();
+            else renderTimeline();
+        }
+
+        // ─── Summary Stats ──────────────────────────────────────────────
+        function updateStats() {
+            const scenario = SCENARIOS[currentScenario];
+            const allNodes = [];
+            flattenNodes(scenario.nodes[0], allNodes, 0);
+
+            const envelopeCount = allNodes.length;
+            let maxDepth = 0;
+            let totalTokens = 0;
+            let totalCost = 0;
+
+            allNodes.forEach(({ node, depth }) => {
+                if (depth > maxDepth) maxDepth = depth;
+                totalTokens += node.input_tokens + node.output_tokens;
+                totalCost += node.cost;
+            });
+
+            document.getElementById('stat-envelopes').textContent = envelopeCount;
+            document.getElementById('stat-depth').textContent = maxDepth;
+            document.getElementById('stat-tokens').textContent = formatTokens(totalTokens);
+            document.getElementById('stat-duration').textContent = scenario.nodes[0].duration_ms + 'ms';
+            document.getElementById('stat-cost').textContent = '$' + totalCost.toFixed(4);
+        }
+
+        // ─── View Toggle ────────────────────────────────────────────────
+        function setView(view) {
+            currentView = view;
+
+            document.getElementById('btn-tree').classList.toggle('active', view === 'tree');
+            document.getElementById('btn-timeline').classList.toggle('active', view === 'timeline');
+
+            document.getElementById('tree-view').classList.toggle('hidden', view !== 'tree');
+            document.getElementById('timeline-view').classList.toggle('hidden', view !== 'timeline');
+
+            if (view === 'tree') renderTree();
+            else renderTimeline();
+        }
+
+        function loadScenario(name) {
+            currentScenario = name;
+            selectedNodeId = null;
+
+            // Reset detail panel
+            document.getElementById('detail-placeholder').classList.remove('hidden');
+            document.getElementById('detail-content').classList.add('hidden');
+
+            renderTree();
+            renderTimeline();
+            updateStats();
+        }
+
+        // ─── Helpers ────────────────────────────────────────────────────
+        function formatTokens(n) {
+            if (n === 0) return '0';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+            return n.toString();
+        }
+
+        // ─── Init ───────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTree();
+            renderTimeline();
+            updateStats();
+        });
+    </script>
+</body>
+</html>
