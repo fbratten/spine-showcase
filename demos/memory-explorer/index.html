@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPINE - Memory Explorer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .code-block { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; }
+
+        /* Tier colors */
+        .tier-1 { --tier-color: #3b82f6; --tier-bg: #eff6ff; --tier-border: #bfdbfe; }
+        .tier-2 { --tier-color: #8b5cf6; --tier-bg: #f5f3ff; --tier-border: #ddd6fe; }
+        .tier-3 { --tier-color: #06b6d4; --tier-bg: #ecfeff; --tier-border: #a5f3fc; }
+        .tier-4 { --tier-color: #f97316; --tier-bg: #fff7ed; --tier-border: #fed7aa; }
+        .tier-5 { --tier-color: #22c55e; --tier-bg: #f0fdf4; --tier-border: #bbf7d0; }
+        .tier-6 { --tier-color: #ef4444; --tier-bg: #fef2f2; --tier-border: #fecaca; }
+        .tier-7 { --tier-color: #ec4899; --tier-bg: #fdf2f8; --tier-border: #fbcfe8; }
+
+        .tier-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .tier-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .tier-card.active {
+            transform: translateX(8px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.3s ease-out forwards; }
+
+        /* Flow diagram */
+        .flow-node {
+            transition: all 0.3s ease;
+        }
+        .flow-node:hover {
+            transform: scale(1.05);
+        }
+        .flow-node.active-flow {
+            box-shadow: 0 0 0 3px var(--tier-color, #6366f1), 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-glow { animation: pulseGlow 1.5s ease-in-out infinite; }
+
+        /* Verdict animation */
+        @keyframes slideRight {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .slide-in { animation: slideRight 0.4s ease-out forwards; }
+
+        .verdict-path {
+            transition: all 0.3s ease;
+        }
+        .verdict-path.active-path {
+            stroke-width: 3;
+            filter: drop-shadow(0 0 4px currentColor);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 md:p-12">
+
+    <div class="max-w-5xl mx-auto">
+
+        <!-- Header -->
+        <header class="mb-12 border-b border-slate-200 pb-6">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded uppercase tracking-wide font-bold">
+                    SPINE
+                </span>
+                <span class="text-slate-400">&rarr;</span>
+                <a href="../" class="text-slate-600 hover:text-indigo-600">Demos</a>
+                <span class="text-slate-400">&rarr;</span>
+                <span class="text-slate-600">Memory Explorer</span>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 mb-2">Memory Explorer</h1>
+            <p class="text-lg text-slate-600">Interactive visualization of SPINE's 7-tier memory architecture with unified facade and verdict routing.</p>
+        </header>
+
+        <!-- Tier Stack + Detail Panel -->
+        <section class="mb-10">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">The 7-Tier Memory Stack</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Tier Stack (left) -->
+                <div class="space-y-2" id="tier-stack">
+                    <div onclick="selectTier(7)" id="tier-card-7" class="tier-card tier-7 bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-pink-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-pink-500 text-white flex items-center justify-center font-bold text-sm">T7</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">GraphMemory</div>
+                                <div class="text-xs text-slate-500">Relationship traversal + analytics</div>
+                            </div>
+                            <span class="text-pink-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <div onclick="selectTier(6)" id="tier-card-6" class="tier-card tier-6 bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-red-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-red-500 text-white flex items-center justify-center font-bold text-sm">T6</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">DeepMemoryStore</div>
+                                <div class="text-xs text-slate-500">PostgreSQL + pgvector long-term storage</div>
+                            </div>
+                            <span class="text-red-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <div onclick="selectTier(5)" id="tier-card-5" class="tier-card tier-5 bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-green-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-green-500 text-white flex items-center justify-center font-bold text-sm">T5</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">EpisodicMemory</div>
+                                <div class="text-xs text-slate-500">Goal-based episode recording + recall</div>
+                            </div>
+                            <span class="text-green-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <div onclick="selectTier(4)" id="tier-card-4" class="tier-card tier-4 bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-orange-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-orange-500 text-white flex items-center justify-center font-bold text-sm">T4</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">VectorStore</div>
+                                <div class="text-xs text-slate-500">Semantic + keyword hybrid search</div>
+                            </div>
+                            <span class="text-orange-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <div onclick="selectTier(3)" id="tier-card-3" class="tier-card tier-3 bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-cyan-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-cyan-500 text-white flex items-center justify-center font-bold text-sm">T3</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">EphemeralMemory</div>
+                                <div class="text-xs text-slate-500">Session context with time-based decay</div>
+                            </div>
+                            <span class="text-cyan-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <div onclick="selectTier(2)" id="tier-card-2" class="tier-card tier-2 bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-violet-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-violet-500 text-white flex items-center justify-center font-bold text-sm">T2</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">Scratchpad</div>
+                                <div class="text-xs text-slate-500">Working memory / task notes</div>
+                            </div>
+                            <span class="text-violet-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+
+                    <div onclick="selectTier(1)" id="tier-card-1" class="tier-card tier-1 bg-white rounded-lg p-4 border-2 border-slate-200 hover:border-blue-400">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-blue-500 text-white flex items-center justify-center font-bold text-sm">T1</div>
+                            <div class="flex-1">
+                                <div class="font-bold text-slate-900">KVStore</div>
+                                <div class="text-xs text-slate-500">Fast key-value pairs by namespace</div>
+                            </div>
+                            <span class="text-blue-500 text-xl">&rarr;</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detail Panel (right) -->
+                <div id="detail-panel" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                    <div id="detail-placeholder" class="flex items-center justify-center h-full text-slate-400 text-sm">
+                        Click a tier in the stack to explore it
+                    </div>
+                    <div id="detail-content" class="hidden">
+                        <div class="flex items-center gap-3 mb-4">
+                            <span id="detail-badge" class="text-xs px-2 py-1 rounded uppercase tracking-wide font-bold"></span>
+                            <h3 id="detail-title" class="text-xl font-bold text-slate-900"></h3>
+                        </div>
+                        <p id="detail-desc" class="text-sm text-slate-600 mb-4"></p>
+
+                        <div class="grid grid-cols-1 gap-3 mb-4">
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">Backend</div>
+                                <div id="detail-backend" class="text-sm text-slate-700 mono"></div>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">API Methods</div>
+                                <div id="detail-methods" class="text-sm text-slate-700 mono"></div>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                <div class="text-xs font-bold text-slate-500 uppercase mb-1">Best For</div>
+                                <div id="detail-best-for" class="text-sm text-slate-600"></div>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 rounded-lg overflow-hidden">
+                            <div class="flex items-center justify-between px-3 py-2 bg-slate-800">
+                                <span class="text-slate-400 text-xs mono">Example</span>
+                            </div>
+                            <pre id="detail-code" class="code-block text-slate-300 p-3 overflow-x-auto whitespace-pre"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MemoryFacade Data Flow -->
+        <section class="mb-10">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">MemoryFacade: Unified Query Flow</h2>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <p class="text-sm text-slate-600 mb-5">
+                    <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs mono">MemoryFacade.search()</code> fans out a single query across all 7 tiers, normalizes scores, and returns ranked results.
+                </p>
+
+                <div class="flex flex-col items-center gap-3">
+                    <!-- Query input -->
+                    <div class="flex items-center gap-3 w-full max-w-md">
+                        <input type="text" id="facade-query" value="authentication patterns" placeholder="Enter a query..."
+                               class="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 mono">
+                        <button onclick="runFacadeQuery()" id="facade-run-btn"
+                                class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-5 rounded-lg transition text-sm">
+                            Search
+                        </button>
+                    </div>
+
+                    <!-- Flow diagram -->
+                    <div class="w-full mt-4">
+                        <!-- Facade bar -->
+                        <div id="facade-bar" class="bg-indigo-100 border-2 border-indigo-300 rounded-lg px-4 py-3 text-center mb-3 flow-node">
+                            <div class="font-bold text-indigo-700 text-sm">MemoryFacade</div>
+                            <div class="text-xs text-indigo-500">Score normalization + tier weighting</div>
+                        </div>
+
+                        <!-- Fan-out arrows + tier boxes -->
+                        <div class="grid grid-cols-7 gap-1 md:gap-2 mb-3">
+                            <div id="flow-t1" class="flow-node bg-blue-50 border border-blue-200 rounded-lg p-2 text-center">
+                                <div class="text-xs font-bold text-blue-700">T1</div>
+                                <div class="text-[10px] text-blue-500 hidden md:block">KV</div>
+                                <div id="flow-t1-score" class="text-xs font-bold text-slate-400 mt-1">--</div>
+                            </div>
+                            <div id="flow-t2" class="flow-node bg-violet-50 border border-violet-200 rounded-lg p-2 text-center">
+                                <div class="text-xs font-bold text-violet-700">T2</div>
+                                <div class="text-[10px] text-violet-500 hidden md:block">Scratch</div>
+                                <div id="flow-t2-score" class="text-xs font-bold text-slate-400 mt-1">--</div>
+                            </div>
+                            <div id="flow-t3" class="flow-node bg-cyan-50 border border-cyan-200 rounded-lg p-2 text-center">
+                                <div class="text-xs font-bold text-cyan-700">T3</div>
+                                <div class="text-[10px] text-cyan-500 hidden md:block">Ephemeral</div>
+                                <div id="flow-t3-score" class="text-xs font-bold text-slate-400 mt-1">--</div>
+                            </div>
+                            <div id="flow-t4" class="flow-node bg-orange-50 border border-orange-200 rounded-lg p-2 text-center">
+                                <div class="text-xs font-bold text-orange-700">T4</div>
+                                <div class="text-[10px] text-orange-500 hidden md:block">Vector</div>
+                                <div id="flow-t4-score" class="text-xs font-bold text-slate-400 mt-1">--</div>
+                            </div>
+                            <div id="flow-t5" class="flow-node bg-green-50 border border-green-200 rounded-lg p-2 text-center">
+                                <div class="text-xs font-bold text-green-700">T5</div>
+                                <div class="text-[10px] text-green-500 hidden md:block">Episodic</div>
+                                <div id="flow-t5-score" class="text-xs font-bold text-slate-400 mt-1">--</div>
+                            </div>
+                            <div id="flow-t6" class="flow-node bg-red-50 border border-red-200 rounded-lg p-2 text-center">
+                                <div class="text-xs font-bold text-red-700">T6</div>
+                                <div class="text-[10px] text-red-500 hidden md:block">Deep</div>
+                                <div id="flow-t6-score" class="text-xs font-bold text-slate-400 mt-1">--</div>
+                            </div>
+                            <div id="flow-t7" class="flow-node bg-pink-50 border border-pink-200 rounded-lg p-2 text-center">
+                                <div class="text-xs font-bold text-pink-700">T7</div>
+                                <div class="text-[10px] text-pink-500 hidden md:block">Graph</div>
+                                <div id="flow-t7-score" class="text-xs font-bold text-slate-400 mt-1">--</div>
+                            </div>
+                        </div>
+
+                        <!-- Results -->
+                        <div id="facade-results" class="bg-slate-50 border border-slate-200 rounded-lg p-3 hidden">
+                            <div class="text-xs font-bold text-slate-500 uppercase mb-2">Ranked Results</div>
+                            <div id="facade-results-list" class="space-y-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- VerdictRouter Visualization -->
+        <section class="mb-10">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">VerdictRouter: Decision Routing</h2>
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                <p class="text-sm text-slate-600 mb-5">
+                    After task evaluation, the <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs mono">VerdictRouter</code> directs results to the appropriate memory tier based on the verdict.
+                </p>
+
+                <div class="flex flex-col items-center">
+                    <!-- Verdict selector -->
+                    <div class="flex gap-3 mb-6">
+                        <button onclick="simulateVerdict('accept')" id="btn-accept"
+                                class="px-5 py-2.5 rounded-lg font-bold text-sm transition bg-green-100 text-green-700 hover:bg-green-200 border-2 border-transparent">
+                            ACCEPT
+                        </button>
+                        <button onclick="simulateVerdict('revise')" id="btn-revise"
+                                class="px-5 py-2.5 rounded-lg font-bold text-sm transition bg-amber-100 text-amber-700 hover:bg-amber-200 border-2 border-transparent">
+                            REVISE
+                        </button>
+                        <button onclick="simulateVerdict('reject')" id="btn-reject"
+                                class="px-5 py-2.5 rounded-lg font-bold text-sm transition bg-red-100 text-red-700 hover:bg-red-200 border-2 border-transparent">
+                            REJECT
+                        </button>
+                    </div>
+
+                    <!-- Flow visualization -->
+                    <div class="w-full max-w-lg">
+                        <!-- Source: Evaluator -->
+                        <div class="bg-indigo-100 border-2 border-indigo-300 rounded-lg px-4 py-3 text-center mb-2">
+                            <div class="font-bold text-indigo-700 text-sm">AgenticLoop Evaluator</div>
+                            <div id="verdict-label" class="text-xs text-indigo-500">Click a verdict above</div>
+                        </div>
+
+                        <!-- Arrow -->
+                        <div class="flex justify-center mb-2">
+                            <svg width="24" height="24" viewBox="0 0 24 24">
+                                <path d="M12 4 L12 18 M7 14 L12 19 L17 14" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+
+                        <!-- VerdictRouter -->
+                        <div id="verdict-router-box" class="bg-slate-100 border-2 border-slate-300 rounded-lg px-4 py-3 text-center mb-2">
+                            <div class="font-bold text-slate-700 text-sm">VerdictRouter</div>
+                            <div class="text-xs text-slate-500">route(verdict, task, result)</div>
+                        </div>
+
+                        <!-- Three paths -->
+                        <div class="grid grid-cols-3 gap-3 mt-2">
+                            <div id="path-accept" class="opacity-30 transition-all duration-300">
+                                <div class="flex justify-center mb-2">
+                                    <svg width="24" height="24" viewBox="0 0 24 24">
+                                        <path d="M12 4 L12 18 M7 14 L12 19 L17 14" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </div>
+                                <div class="bg-green-50 border-2 border-green-200 rounded-lg p-3 text-center">
+                                    <div class="text-xs font-bold text-green-700">ACCEPT</div>
+                                    <div class="text-[10px] text-green-600 mt-1">Store as Episode</div>
+                                    <div class="text-[10px] text-green-500 mt-1 mono">T5: EpisodicMemory</div>
+                                </div>
+                            </div>
+                            <div id="path-revise" class="opacity-30 transition-all duration-300">
+                                <div class="flex justify-center mb-2">
+                                    <svg width="24" height="24" viewBox="0 0 24 24">
+                                        <path d="M12 4 L12 18 M7 14 L12 19 L17 14" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </div>
+                                <div class="bg-amber-50 border-2 border-amber-200 rounded-lg p-3 text-center">
+                                    <div class="text-xs font-bold text-amber-700">REVISE</div>
+                                    <div class="text-[10px] text-amber-600 mt-1">Update revision notes</div>
+                                    <div class="text-[10px] text-amber-500 mt-1 mono">T2: Scratchpad</div>
+                                </div>
+                            </div>
+                            <div id="path-reject" class="opacity-30 transition-all duration-300">
+                                <div class="flex justify-center mb-2">
+                                    <svg width="24" height="24" viewBox="0 0 24 24">
+                                        <path d="M12 4 L12 18 M7 14 L12 19 L17 14" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                </div>
+                                <div class="bg-red-50 border-2 border-red-200 rounded-lg p-3 text-center">
+                                    <div class="text-xs font-bold text-red-700">REJECT</div>
+                                    <div class="text-[10px] text-red-600 mt-1">Log rejection reason</div>
+                                    <div class="text-[10px] text-red-500 mt-1 mono">T3: EphemeralMemory</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Verdict detail -->
+                        <div id="verdict-detail" class="mt-4 hidden">
+                            <div id="verdict-detail-content" class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-600 slide-in"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tier Comparison Table -->
+        <section class="mb-10">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Tier Comparison</h2>
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200">
+                                <th class="text-left px-4 py-3 font-bold text-slate-700">Tier</th>
+                                <th class="text-left px-4 py-3 font-bold text-slate-700">Name</th>
+                                <th class="text-left px-4 py-3 font-bold text-slate-700">Backend</th>
+                                <th class="text-left px-4 py-3 font-bold text-slate-700">Scope</th>
+                                <th class="text-left px-4 py-3 font-bold text-slate-700">Persistence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-slate-100 hover:bg-blue-50/30 cursor-pointer" onclick="selectTier(1)">
+                                <td class="px-4 py-3"><span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500"></span><span class="font-medium text-blue-700">1</span></span></td>
+                                <td class="px-4 py-3 font-medium">KVStore</td>
+                                <td class="px-4 py-3 mono text-xs text-slate-600">SQLite / File</td>
+                                <td class="px-4 py-3 text-xs text-slate-600">Namespace-scoped</td>
+                                <td class="px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Durable</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-violet-50/30 cursor-pointer" onclick="selectTier(2)">
+                                <td class="px-4 py-3"><span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-violet-500"></span><span class="font-medium text-violet-700">2</span></span></td>
+                                <td class="px-4 py-3 font-medium">Scratchpad</td>
+                                <td class="px-4 py-3 mono text-xs text-slate-600">In-memory list</td>
+                                <td class="px-4 py-3 text-xs text-slate-600">Task-scoped</td>
+                                <td class="px-4 py-3"><span class="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded">Volatile</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-cyan-50/30 cursor-pointer" onclick="selectTier(3)">
+                                <td class="px-4 py-3"><span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-cyan-500"></span><span class="font-medium text-cyan-700">3</span></span></td>
+                                <td class="px-4 py-3 font-medium">EphemeralMemory</td>
+                                <td class="px-4 py-3 mono text-xs text-slate-600">In-memory + decay</td>
+                                <td class="px-4 py-3 text-xs text-slate-600">Session-scoped</td>
+                                <td class="px-4 py-3"><span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded">TTL Decay</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-orange-50/30 cursor-pointer" onclick="selectTier(4)">
+                                <td class="px-4 py-3"><span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-orange-500"></span><span class="font-medium text-orange-700">4</span></span></td>
+                                <td class="px-4 py-3 font-medium">VectorStore</td>
+                                <td class="px-4 py-3 mono text-xs text-slate-600">LanceDB / Keyword</td>
+                                <td class="px-4 py-3 text-xs text-slate-600">Collection-scoped</td>
+                                <td class="px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Durable</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-green-50/30 cursor-pointer" onclick="selectTier(5)">
+                                <td class="px-4 py-3"><span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-green-500"></span><span class="font-medium text-green-700">5</span></span></td>
+                                <td class="px-4 py-3 font-medium">EpisodicMemory</td>
+                                <td class="px-4 py-3 mono text-xs text-slate-600">SQLite + FTS5</td>
+                                <td class="px-4 py-3 text-xs text-slate-600">Goal-scoped</td>
+                                <td class="px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Durable</span></td>
+                            </tr>
+                            <tr class="border-b border-slate-100 hover:bg-red-50/30 cursor-pointer" onclick="selectTier(6)">
+                                <td class="px-4 py-3"><span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-red-500"></span><span class="font-medium text-red-700">6</span></span></td>
+                                <td class="px-4 py-3 font-medium">DeepMemoryStore</td>
+                                <td class="px-4 py-3 mono text-xs text-slate-600">PostgreSQL + pgvector</td>
+                                <td class="px-4 py-3 text-xs text-slate-600">Project-scoped</td>
+                                <td class="px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Durable</span></td>
+                            </tr>
+                            <tr class="hover:bg-pink-50/30 cursor-pointer" onclick="selectTier(7)">
+                                <td class="px-4 py-3"><span class="inline-flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-pink-500"></span><span class="font-medium text-pink-700">7</span></span></td>
+                                <td class="px-4 py-3 font-medium">GraphMemory</td>
+                                <td class="px-4 py-3 mono text-xs text-slate-600">PostgreSQL + NetworkX</td>
+                                <td class="px-4 py-3 text-xs text-slate-600">Cross-entity</td>
+                                <td class="px-4 py-3"><span class="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded">Durable</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cross-Cutting Concerns -->
+        <section class="mb-10">
+            <h2 class="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4">Cross-Cutting Components</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-500 text-white flex items-center justify-center text-sm font-bold">F</div>
+                        <h3 class="font-bold text-slate-900 text-sm">MemoryFacade</h3>
+                    </div>
+                    <p class="text-xs text-slate-600 mb-3">Unified search across all 7 tiers. Score normalization and tier weighting merge results from different backends into a single ranked list.</p>
+                    <code class="text-xs mono text-indigo-600 bg-indigo-50 px-2 py-1 rounded block">facade.search("query", top_k=10)</code>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-teal-500 text-white flex items-center justify-center text-sm font-bold">M</div>
+                        <h3 class="font-bold text-slate-900 text-sm">FederatedMemory</h3>
+                    </div>
+                    <p class="text-xs text-slate-600 mb-3">Read-only cross-project memory federation. Parallel fan-out to remote Minna MCP servers with budget controls and provenance metadata.</p>
+                    <code class="text-xs mono text-teal-600 bg-teal-50 px-2 py-1 rounded block">fed.search("query", limit=10)</code>
+                </div>
+                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500 text-white flex items-center justify-center text-sm font-bold">V</div>
+                        <h3 class="font-bold text-slate-900 text-sm">VerdictRouter</h3>
+                    </div>
+                    <p class="text-xs text-slate-600 mb-3">Routes evaluator verdicts to the appropriate tier. Accept stores episodes, Revise updates scratchpad, Reject logs to ephemeral memory.</p>
+                    <code class="text-xs mono text-amber-600 bg-amber-50 px-2 py-1 rounded block">router.route(verdict, task, result)</code>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="bg-indigo-50 rounded-xl p-6 border border-indigo-100 mb-12">
+            <h3 class="font-bold text-indigo-900 text-sm uppercase tracking-wide mb-4">How the Memory System Works</h3>
+            <div class="text-sm text-indigo-700 space-y-3">
+                <p>
+                    SPINE's memory architecture uses <strong>7 tiers</strong> to match different temporal scopes and access patterns.
+                    Fast lookups use Tier 1 (KVStore), session-scoped observations use Tier 3 (Ephemeral), and long-term
+                    semantic knowledge lives in Tier 6 (DeepMemoryStore) with PostgreSQL + pgvector.
+                </p>
+                <div class="bg-white/50 p-3 rounded mono text-xs">
+                    facade = MemoryFacade(kv, scratchpad, ephemeral, vector, episodic, deep_store, graph_memory)<br>
+                    results = facade.search("authentication", top_k=10)<br>
+                    # Returns ranked results from whichever tiers have relevant data
+                </div>
+                <p>
+                    The <strong>MemoryFacade</strong> provides a single search interface across all tiers. The <strong>VerdictRouter</strong>
+                    closes the feedback loop by directing task outcomes to the appropriate tier based on the evaluator's verdict.
+                    <strong>FederatedMemory</strong> extends reach across project boundaries via parallel MCP server queries.
+                </p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="mt-12 pt-6 border-t border-slate-200 flex justify-between items-center">
+            <a href="../" class="text-indigo-600 hover:underline text-sm">
+                &larr; Back to Demos
+            </a>
+            <span class="text-xs text-slate-400">
+                Portfolio: <a href="https://github.com/fbratten" class="hover:underline">github.com/fbratten</a>
+            </span>
+        </footer>
+    </div>
+
+    <script>
+        // Tier data
+        const TIERS = {
+            1: {
+                title: 'KVStore',
+                badge: 'bg-blue-100 text-blue-700',
+                borderClass: 'border-blue-500',
+                desc: 'Namespace-scoped key-value storage for structured data. Supports SQLite and file-based persistence backends with atomic writes.',
+                backend: 'SQLite (default) or File-based (one JSON file per namespace)',
+                methods: 'kv.set(ns, key, val), kv.get(ns, key), kv.keys(ns), kv.delete(ns, key)',
+                bestFor: 'Configuration values, counters, state flags, small structured data that needs fast lookup by key.',
+                code: 'from spine.memory.kv_store import KVStore\n\nkv = KVStore(backend="sqlite", path="memory/kv.db")\n\nkv.set("config", "max_retries", "3")\nkv.set("config", "timeout_ms", "5000")\n\nvalue = kv.get("config", "max_retries")  # "3"\nkeys = kv.keys("config")  # ["max_retries", "timeout_ms"]'
+            },
+            2: {
+                title: 'Scratchpad',
+                badge: 'bg-violet-100 text-violet-700',
+                borderClass: 'border-violet-500',
+                desc: 'Short-term task notes that live for the duration of a task or subtask. In-memory only, not persisted across sessions.',
+                backend: 'In-memory list (not persisted)',
+                methods: 'pad.write(key, note), pad.read(key), pad.clear()',
+                bestFor: 'Working memory during multi-step task execution, temporary notes, intermediate results between steps.',
+                code: 'from spine.memory.scratchpad import Scratchpad\n\npad = Scratchpad()\n\npad.write("plan", "Refactor auth module first")\npad.write("blockers", "Waiting on API key")\n\nnote = pad.read("plan")\npad.clear()  # Done with task'
+            },
+            3: {
+                title: 'EphemeralMemory',
+                badge: 'bg-cyan-100 text-cyan-700',
+                borderClass: 'border-cyan-500',
+                desc: 'Session-scoped memory with time-based decay. Entries lose relevance over time and are automatically pruned when scores drop below threshold.',
+                backend: 'In-memory with configurable decay function',
+                methods: 'eph.store(text, tags), eph.recall(tags), eph.prune()',
+                bestFor: 'Recent observations, conversational context, facts that matter now but not tomorrow.',
+                code: 'from spine.memory.ephemeral import EphemeralMemory\n\neph = EphemeralMemory(decay_rate=0.1, prune_threshold=0.2)\n\neph.store("User prefers verbose output", tags=["preference"])\neph.store("Auth returns 401 for expired tokens", tags=["api"])\n\nresults = eph.recall(tags=["api"])\n# [{"text": "Auth returns...", "score": 0.85, "age_seconds": 120}]'
+            },
+            4: {
+                title: 'VectorStore',
+                badge: 'bg-orange-100 text-orange-700',
+                borderClass: 'border-orange-500',
+                desc: 'Hybrid semantic and keyword search over persistent document collections. Supports 7 embedding providers including local, OpenAI, Voyage, and Gemini.',
+                backend: 'LanceDB for vectors, keyword index for fallback/hybrid mode',
+                methods: 'vs.add(id, text, tags), vs.search(query, top_k), vs.keyword_search(q), vs.hybrid_search(q, top_k)',
+                bestFor: 'Knowledge bases, documentation search, semantic retrieval over large corpora.',
+                code: 'from spine.memory.vector_store import VectorStore\n\nvs = VectorStore(path="memory/vectors", embedding_provider=provider)\n\nvs.add("doc-001", text="JWT tokens with 1-hour expiry", tags=["auth"])\nvs.add("doc-002", text="Rate limit: 100 req/min", tags=["api"])\n\n# Semantic, keyword, or hybrid search\nresults = vs.hybrid_search("token expiration policy", top_k=5)'
+            },
+            5: {
+                title: 'EpisodicMemory',
+                badge: 'bg-green-100 text-green-700',
+                borderClass: 'border-green-500',
+                desc: 'Goal-based recall of past execution episodes. Stores structured records of what was attempted, what happened, and what was learned.',
+                backend: 'SQLite with FTS5 full-text search',
+                methods: 'episodic.store(episode), episodic.recall(goal, limit), episodic.search(text)',
+                bestFor: 'Learning from past actions, avoiding repeated mistakes, recalling solutions to similar problems.',
+                code: 'from spine.memory.episodic import EpisodicMemory, Episode\n\nepisodic = EpisodicMemory(db_path="memory/episodes.db")\n\nepisode = Episode(\n    goal="Fix failing CI pipeline",\n    events=[...],\n    outcome=Outcome(success=True, action="fix_ci"),\n    tags=["ci", "testing"],\n)\nepisodic.store(episode)\n\nsimilar = episodic.recall(goal="Debug test failures", limit=5)'
+            },
+            6: {
+                title: 'DeepMemoryStore',
+                badge: 'bg-red-100 text-red-700',
+                borderClass: 'border-red-500',
+                desc: 'PostgreSQL + pgvector backed persistent memory for long-term semantic recall. Supports entity management, confidence decay, relationship graphs, and OODA decision audit trails.',
+                backend: 'PostgreSQL with pgvector HNSW indexes + pg_trgm',
+                methods: 'store.store_memory(...), store.search(q), store.recall(entity), store.link(...), store.log_decision(...)',
+                bestFor: 'Long-term knowledge persistence, cross-session semantic recall, decision provenance tracking.',
+                code: 'from spine.memory.deep_store import DeepMemoryStore\n\nstore = DeepMemoryStore(config, embedding_provider=provider)\nstore.init_schema()\n\nstore.store_memory("AuthModule", "component", "architecture",\n                   "JWT-based with 1-hour token expiry")\n\nresults = store.search("token expiration policy", limit=5)\nstore.link("AuthModule", "UserService", "CALLS")\nrelated = store.get_related("AuthModule", hops=2)'
+            },
+            7: {
+                title: 'GraphMemory',
+                badge: 'bg-pink-100 text-pink-700',
+                borderClass: 'border-pink-500',
+                desc: 'Graph traversal and analytics layer over DeepMemoryStore. Provides shortest path, centrality analysis, clustering, and subgraph extraction without a dedicated graph database.',
+                backend: 'PostgreSQL recursive CTEs + NetworkX (optional)',
+                methods: 'graph.shortest_path(a, b), graph.neighborhood(e, hops), graph.central_entities(metric, k), graph.stats()',
+                bestFor: 'Understanding entity relationships, discovering knowledge clusters, tracing dependency chains.',
+                code: 'from spine.memory.graph_memory import GraphMemory\n\ngraph = GraphMemory(deep_store=store)\n\npath = graph.shortest_path("SPINE", "MemoryFacade")\n# GraphPath(nodes=["SPINE", "Orchestrator", "MemoryFacade"])\n\nhood = graph.neighborhood("AuthModule", hops=2)\ncentral = graph.central_entities(metric="degree", top_k=5)\nstats = graph.stats()\n# GraphStats(node_count=150, edge_count=320, density=0.014)'
+            }
+        };
+
+        const TIER_COLORS = {
+            1: 'blue', 2: 'violet', 3: 'cyan', 4: 'orange', 5: 'green', 6: 'red', 7: 'pink'
+        };
+
+        let selectedTier = null;
+
+        function selectTier(tierNum) {
+            selectedTier = tierNum;
+            const data = TIERS[tierNum];
+            const color = TIER_COLORS[tierNum];
+
+            // Update card selection
+            for (let i = 1; i <= 7; i++) {
+                const card = document.getElementById('tier-card-' + i);
+                card.classList.remove('active');
+                card.classList.add('border-slate-200');
+                card.classList.remove('border-blue-500', 'border-violet-500', 'border-cyan-500', 'border-orange-500', 'border-green-500', 'border-red-500', 'border-pink-500');
+            }
+            const activeCard = document.getElementById('tier-card-' + tierNum);
+            activeCard.classList.add('active', data.borderClass);
+            activeCard.classList.remove('border-slate-200');
+
+            // Update detail panel
+            document.getElementById('detail-placeholder').classList.add('hidden');
+            const content = document.getElementById('detail-content');
+            content.classList.remove('hidden');
+            content.classList.add('fade-in');
+
+            document.getElementById('detail-badge').className = `text-xs px-2 py-1 rounded uppercase tracking-wide font-bold ${data.badge}`;
+            document.getElementById('detail-badge').textContent = `Tier ${tierNum}`;
+            document.getElementById('detail-title').textContent = data.title;
+            document.getElementById('detail-desc').textContent = data.desc;
+            document.getElementById('detail-backend').textContent = data.backend;
+            document.getElementById('detail-methods').textContent = data.methods;
+            document.getElementById('detail-best-for').textContent = data.bestFor;
+            document.getElementById('detail-code').textContent = data.code;
+
+            setTimeout(() => content.classList.remove('fade-in'), 300);
+        }
+
+        // MemoryFacade simulation
+        const FACADE_RESULTS = {
+            'authentication patterns': {
+                scores: [0.45, 0.10, 0.62, 0.91, 0.78, 0.88, 0.55],
+                results: [
+                    { tier: 4, score: 0.91, text: 'JWT tokens with 1-hour expiry, refresh via /auth/refresh' },
+                    { tier: 6, score: 0.88, text: 'AuthModule: JWT-based architecture, RBAC since v2.1' },
+                    { tier: 5, score: 0.78, text: 'Episode: Fixed auth token leak in session middleware' },
+                    { tier: 3, score: 0.62, text: 'User asked about OAuth2 flow 3 minutes ago' },
+                    { tier: 7, score: 0.55, text: 'AuthModule --CALLS--> TokenService --CALLS--> UserStore' },
+                ]
+            },
+            'default': {
+                scores: [0.30, 0.15, 0.40, 0.72, 0.55, 0.68, 0.42],
+                results: [
+                    { tier: 4, score: 0.72, text: 'Semantic match from vector store collection' },
+                    { tier: 6, score: 0.68, text: 'Deep memory entity with high confidence' },
+                    { tier: 5, score: 0.55, text: 'Past episode with similar goal pattern' },
+                    { tier: 7, score: 0.42, text: 'Graph neighborhood match (2 hops)' },
+                    { tier: 3, score: 0.40, text: 'Recent ephemeral observation (decaying)' },
+                ]
+            }
+        };
+
+        const TIER_SHORT = { 1: 'KV', 2: 'Scratch', 3: 'Ephemeral', 4: 'Vector', 5: 'Episodic', 6: 'Deep', 7: 'Graph' };
+        const TIER_BG_CLASSES = {
+            1: 'bg-blue-100 text-blue-700',
+            2: 'bg-violet-100 text-violet-700',
+            3: 'bg-cyan-100 text-cyan-700',
+            4: 'bg-orange-100 text-orange-700',
+            5: 'bg-green-100 text-green-700',
+            6: 'bg-red-100 text-red-700',
+            7: 'bg-pink-100 text-pink-700',
+        };
+
+        async function runFacadeQuery() {
+            const query = document.getElementById('facade-query').value.trim();
+            const btn = document.getElementById('facade-run-btn');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            btn.textContent = 'Searching...';
+
+            const data = FACADE_RESULTS[query] || FACADE_RESULTS['default'];
+
+            // Animate facade bar
+            document.getElementById('facade-bar').classList.add('active-flow');
+            document.getElementById('facade-bar').style.setProperty('--tier-color', '#6366f1');
+
+            // Reset all flow nodes
+            for (let i = 1; i <= 7; i++) {
+                document.getElementById('flow-t' + i + '-score').textContent = '--';
+                document.getElementById('flow-t' + i + '-score').className = 'text-xs font-bold text-slate-400 mt-1';
+            }
+            document.getElementById('facade-results').classList.add('hidden');
+
+            await sleep(300);
+
+            // Animate each tier lighting up
+            for (let i = 1; i <= 7; i++) {
+                const el = document.getElementById('flow-t' + i);
+                el.classList.add('pulse-glow');
+                await sleep(120);
+                const score = data.scores[i - 1];
+                const scoreEl = document.getElementById('flow-t' + i + '-score');
+                scoreEl.textContent = score.toFixed(2);
+                if (score >= 0.7) {
+                    scoreEl.className = 'text-xs font-bold text-green-600 mt-1';
+                } else if (score >= 0.4) {
+                    scoreEl.className = 'text-xs font-bold text-amber-600 mt-1';
+                } else {
+                    scoreEl.className = 'text-xs font-bold text-slate-400 mt-1';
+                }
+                el.classList.remove('pulse-glow');
+            }
+
+            await sleep(200);
+
+            // Show results
+            const resultsEl = document.getElementById('facade-results-list');
+            resultsEl.innerHTML = '';
+            data.results.forEach((r, idx) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-start gap-2 text-xs py-1.5 border-b border-slate-100 last:border-0';
+                div.innerHTML = `
+                    <span class="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold ${TIER_BG_CLASSES[r.tier]}">T${r.tier}</span>
+                    <span class="text-slate-600 flex-1">${r.text}</span>
+                    <span class="shrink-0 font-bold mono ${r.score >= 0.7 ? 'text-green-600' : 'text-amber-600'}">${r.score.toFixed(2)}</span>
+                `;
+                resultsEl.appendChild(div);
+            });
+            document.getElementById('facade-results').classList.remove('hidden');
+            document.getElementById('facade-bar').classList.remove('active-flow');
+
+            btn.disabled = false;
+            btn.classList.remove('opacity-50');
+            btn.textContent = 'Search';
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // VerdictRouter simulation
+        const VERDICT_DETAILS = {
+            accept: {
+                label: 'Verdict: ACCEPT',
+                routerBorder: 'border-green-400',
+                detail: '<strong>Action:</strong> Store the successful outcome as a structured Episode in Tier 5 (EpisodicMemory). The episode includes the goal, events, outcome, and tags for future goal-based recall. If DeepMemoryStore is available (Tier 6), the episode is also synced via MemoryHooks for long-term persistence.'
+            },
+            revise: {
+                label: 'Verdict: REVISE',
+                routerBorder: 'border-amber-400',
+                detail: '<strong>Action:</strong> Write revision notes to Tier 2 (Scratchpad) so the next loop iteration can use them. The scratchpad entry includes the revision reason, suggested changes, and the evaluator\'s feedback. The task re-enters the OODA loop with updated context.'
+            },
+            reject: {
+                label: 'Verdict: REJECT',
+                routerBorder: 'border-red-400',
+                detail: '<strong>Action:</strong> Log the rejection reason to Tier 3 (EphemeralMemory) with appropriate tags. This ensures the rejection is visible during the current session for pattern detection (e.g., repeated failures) but decays naturally and does not pollute long-term storage.'
+            }
+        };
+
+        function simulateVerdict(verdict) {
+            const data = VERDICT_DETAILS[verdict];
+
+            // Update buttons
+            ['accept', 'revise', 'reject'].forEach(v => {
+                const btn = document.getElementById('btn-' + v);
+                btn.classList.remove('border-green-500', 'border-amber-500', 'border-red-500');
+                btn.classList.add('border-transparent');
+            });
+            const activeBtn = document.getElementById('btn-' + verdict);
+            const borderColor = verdict === 'accept' ? 'border-green-500' : verdict === 'revise' ? 'border-amber-500' : 'border-red-500';
+            activeBtn.classList.remove('border-transparent');
+            activeBtn.classList.add(borderColor);
+
+            // Update label
+            document.getElementById('verdict-label').textContent = data.label;
+
+            // Update router box
+            const routerBox = document.getElementById('verdict-router-box');
+            routerBox.classList.remove('border-slate-300', 'border-green-400', 'border-amber-400', 'border-red-400');
+            routerBox.classList.add(data.routerBorder);
+
+            // Highlight the correct path, dim others
+            ['accept', 'revise', 'reject'].forEach(v => {
+                const pathEl = document.getElementById('path-' + v);
+                if (v === verdict) {
+                    pathEl.classList.remove('opacity-30');
+                    pathEl.classList.add('opacity-100');
+                } else {
+                    pathEl.classList.remove('opacity-100');
+                    pathEl.classList.add('opacity-30');
+                }
+            });
+
+            // Show detail
+            const detailEl = document.getElementById('verdict-detail');
+            detailEl.classList.remove('hidden');
+            const detailContent = document.getElementById('verdict-detail-content');
+            detailContent.innerHTML = data.detail;
+            detailContent.classList.remove('slide-in');
+            void detailContent.offsetWidth; // force reflow
+            detailContent.classList.add('slide-in');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Nothing selected initially
+        });
+    </script>
+</body>
+</html>
