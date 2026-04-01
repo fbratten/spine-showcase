@@ -7,6 +7,10 @@
 - [Tiered Enforcement Protocol](tiered-enforcement.md) - When to use each capability level
 - [Pattern Guide](patterns.md) - Fan-out and Pipeline usage
 
+## New in v0.5.0
+
+- [RunContext: Authority Inversion](runcontext.md) - RunContext as sole runtime truth, 4 inverted modules, SkillCompiler cognitive compiler, PlanValidator, policy tags, plan_summary()
+
 ## New in v0.4.0
 
 - [Deep Memory](deep-memory.md) - PostgreSQL+pgvector deep store, graph memory, cross-project federation, OODA hooks
@@ -55,6 +59,7 @@ This architectural blueprint on production-ready multi-agent systems (from Anthr
 
 | Topic | Document |
 |-------|----------|
+| **RunContext (NEW)** | [RunContext: Authority Inversion](runcontext.md) |
 | **New to SPINE?** | Start with [Blueprint Implementation](blueprint-implementation.md) |
 | **System Design** | [Architecture Overview](architecture.md) |
 | **Capability Usage** | [Tiered Enforcement Protocol](tiered-enforcement.md) |

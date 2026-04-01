@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status](https://img.shields.io/badge/status-active-green)]()
-[![Version](https://img.shields.io/badge/version-0.4.0-blue)]()
+[![Version](https://img.shields.io/badge/version-0.5.0-blue)]()
 [![Live Site](https://img.shields.io/badge/site-live-blue)](https://fbratten.github.io/spine-showcase/)
 [![Demos](https://img.shields.io/badge/demos-7%20interactive-purple)](https://fbratten.github.io/spine-showcase/demos/)
 
@@ -32,7 +32,8 @@
 | 🔗 **MCP Session Pool** | Persistent MCP connections with background event loop |
 | 🧠 **Persistent Memory** | Optional Minna Memory integration for cross-session memory |
 | 🔄 **Agent OS 2026** | OODA loop composition, deep memory hooks, agent processes, task DAGs |
-| 🧬 **7-Tier Memory** | KV, Scratchpad, Ephemeral, Vector, Episodic, DeepMemory (pgvector), GraphMemory — unified by MemoryFacade |
+| 🎯 **Authority Inversion** | RunContext as sole runtime truth - 4 inverted modules, SkillCompiler cognitive compiler, PlanValidator (v0.5.0) |
+| 🧬 **7-Tier Memory** | KV, Scratchpad, Ephemeral, Vector, Episodic, DeepMemory (pgvector), GraphMemory - unified by MemoryFacade |
 | 📐 **Embedding Providers** | 7 providers (Local, OpenAI, Voyage, ONNX, Gemini, Keyword, Placeholder) |
 
 ---
@@ -449,7 +450,8 @@ python -m spine.api --port 8000
 
 | Version | Highlights |
 |---------|------------|
-| **0.4.0** | Phase 3 Deep Memory — DeepMemoryStore (pgvector Tier 6), GraphMemory (Tier 7), FederatedMemory, MemoryHooks + OODA integration, dashboard health check |
+| **0.5.0** | Authority Inversion - RunContext as sole runtime truth. 4 modules inverted (FivePointProtocol, VerdictRouter, OODALoop, ContentPipelineExecutor). SkillCompiler cognitive compiler with tool_checker enforcement. PlanValidator (6 checks). Policy tags. 84 new tests. |
+| **0.4.0** | Phase 3 Deep Memory - DeepMemoryStore (pgvector Tier 6), GraphMemory (Tier 7), FederatedMemory, MemoryHooks + OODA integration, dashboard health check |
 | **0.3.30** | Agent Processes (ProcessManager), Task DAG (dependency resolution, cycle detection) |
 | **0.3.29** | Agent OS 2026 — OODA loop, EpisodicMemory, WorldState, Outcome, 7 embedding providers, MemoryFacade |
 | **0.3.28** | MCPSessionPool (persistent MCP sessions) + MCP Self-Description Generator (4-layer L0-L3) |
