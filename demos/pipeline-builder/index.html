@@ -39,6 +39,10 @@
             </div>
             <h1 class="text-3xl font-bold text-slate-900 mb-2">Pipeline Builder</h1>
             <p class="text-lg text-slate-600">Build and visualize sequential processing chains. Watch data flow through each step.</p>
+
+            <div class="mt-4 p-4 rounded-lg border border-indigo-200 bg-indigo-50 text-sm text-indigo-900">
+              <strong>Status:</strong> Reference pattern. The production compiled execution path uses <code>SkillCompiler → PlanArtifact → PlanExecutor</code> to run sequential steps on <code>RunContext</code>; this demo visualizes the generic <code>pipeline()</code> shape and predates the compiled path. Typed Step I/O and parallelism remain deferred.
+            </div>
         </header>
 
         <!-- Pipeline Builder -->

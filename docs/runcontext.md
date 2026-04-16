@@ -2,6 +2,8 @@
 
 SPINE v0.5.0 introduces **authority inversion** - a fundamental architectural shift where RunContext becomes the sole source of runtime truth. All core modules now operate ON RunContext rather than alongside it, eliminating dual-truth bugs and simplifying session handoff.
 
+> **Official entrypoint function:** `execute_compiled_plan(ctx, executor, project_path)` in `spine/orchestrator/plan_executor_adapter.py` is the one production call that drives a compiled `PlanArtifact` through `PlanExecutor` while RunContext stays sole truth. Two production transports adopt it: CLI (`cmd_execute`) and HTTP (`post_execute` at `POST /api/orchestrator/execute`).
+
 ---
 
 ## The Problem: Dual Truth

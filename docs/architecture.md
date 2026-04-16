@@ -49,14 +49,17 @@ SPINE works across three layers:
 
   <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 12px; padding: 20px 24px; box-shadow: 0 4px 20px rgba(37,99,235,0.3);">
     <div style="color: #bfdbfe; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">Layer 3</div>
-    <div style="color: #fff; font-size: 18px; font-weight: 700; margin-bottom: 12px;">SPINE Python</div>
+    <div style="color: #fff; font-size: 18px; font-weight: 700; margin-bottom: 12px;">SPINE Python — Compiled Execution Path</div>
     <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-      <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; color: #eff6ff; font-size: 13px;">run_scenario.py</span>
-      <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; color: #eff6ff; font-size: 13px;">fan_out()</span>
-      <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; color: #eff6ff; font-size: 13px;">pipeline()</span>
+      <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; color: #eff6ff; font-size: 13px;">SkillCompiler</span>
+      <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; color: #eff6ff; font-size: 13px;">PlanArtifact</span>
+      <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; color: #eff6ff; font-size: 13px;">PlanExecutor</span>
+      <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; color: #eff6ff; font-size: 13px;">execute_compiled_plan()</span>
+      <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; color: #eff6ff; font-size: 13px;">RunContext</span>
       <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; color: #eff6ff; font-size: 13px;">ToolEnvelope</span>
       <span style="background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 20px; padding: 5px 14px; color: #eff6ff; font-size: 13px;">TraceScope</span>
     </div>
+    <div style="color: #bfdbfe; font-size: 11px; margin-top: 8px;">Reference / peer (not in compiled transports): run_scenario.py, fan_out(), pipeline(), AgenticLoop, OODALoop</div>
   </div>
 
 </div>
@@ -111,12 +114,29 @@ graph LR
 
 ## Layer 3: SPINE Python
 
+> **Two production transports on the compiled execution path: CLI and HTTP. Other runtime surfaces intentionally separate.**
+
+### Compiled execution path (adopted)
+
 | Component | What it does |
 |-----------|--------------|
-| `run_scenario.py` | Execute reproducible context stack scenarios |
-| `fan_out()` | Parallel subagent execution with aggregation |
-| `pipeline()` | Sequential multi-step processing |
+| `SkillCompiler` | Compiles a task into a `PlanArtifact` (DAG of steps) — cognitive compiler |
+| `PlanArtifact` | Compiled plan object on `RunContext` |
+| `PlanExecutor` | Sequential step executor; writes verification/state to `RunContext` |
+| `execute_compiled_plan(ctx, executor, project_path)` | **Official entrypoint function** — the one production call |
+| `cmd_execute` (CLI, S53) | `python -m spine.orchestrator execute` — first production transport |
+| `post_execute` (HTTP, S54) | `POST /api/orchestrator/execute` — second production transport |
+| `RunContext` | Sole runtime truth (state machine, step verifications, policy decision, execution log) |
 | `ToolEnvelope` | Instrumented LLM calls with trace correlation |
+
+### Peer / reference runtime surfaces (intentionally separate)
+
+| Component | What it does |
+|-----------|--------------|
+| `run_scenario.py` | One-shot instrumented LLM with context-stack system prompt — structurally distinct from compiled PlanArtifact execution |
+| `fan_out()`, `pipeline()` | Reference parallel/sequential patterns — parallelism on the compiled path remains deferred |
+| `AgenticLoop` / `cmd_run` | Task-queue-driven "run until done" — peer pattern, deferred adoption |
+| `OODALoop.run()` | Peer RunContext-authoritative cognition loop — not part of the compiled execution transport path adopted by CLI/HTTP |
 | `TraceScope` | Hierarchical context management |
 | `LogAggregator` | Query and analyze execution logs |
 

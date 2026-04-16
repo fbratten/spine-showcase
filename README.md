@@ -12,29 +12,40 @@
 
 ## Overview
 
-**SPINE** (Software Pipeline for INtelligent Engineering) provides standardized instrumentation, multi-provider LLM access, and orchestration patterns that connect agentic projects for long-running, complex development workflows.
+**SPINE** is a RunContext-governed orchestration runtime and multi-agent backbone. Its compiled execution path (`SkillCompiler → PlanArtifact → PlanExecutor`) is operational through two production transports: CLI (`cmd_execute`) and HTTP (`POST /api/orchestrator/execute`). Broader legacy runtime surfaces (`cmd_run`/AgenticLoop, `OODALoop.run()`, `run_scenario.py`, API sibling routes, `spine.review` CLI) remain intentionally separate unless a concrete trigger justifies adoption.
+
+> *Two production transports on the compiled execution path: CLI and HTTP. Other runtime surfaces intentionally separate.*
 
 ### Key Capabilities
 
+**Production compiled execution path (adopted):**
+
 | Capability | Description |
 |------------|-------------|
-| 🔄 **Multi-Agent Orchestration** | Fan-out (parallel) and Pipeline (sequential) patterns |
+| 🎯 **Authority Inversion** | RunContext as sole runtime truth — 4 inverted modules, SkillCompiler cognitive compiler, PlanValidator (v0.5.0) |
+| ⚙️ **Compiled Execution** | `SkillCompiler → PlanArtifact → PlanExecutor` — via `execute_compiled_plan(ctx, executor, project_path)` |
+| 🖥️ **CLI Transport** | `python -m spine.orchestrator execute --task "..."` → `cmd_execute` (S53) |
+| 🌐 **HTTP Transport** | `POST /api/orchestrator/execute` → `post_execute` (S54) |
 | 📊 **Full Traceability** | ToolEnvelope instrumentation with hierarchical trace correlation |
 | 🤖 **Multi-Provider Support** | Anthropic, OpenAI, Google Gemini, Grok |
 | 📋 **Tiered Enforcement** | Balanced capability usage based on task complexity |
-| 🧠 **Context Stacks** | Reproducible, structured context management via YAML scenarios |
-| 🔁 **Agentic Loop** | Autonomous "run until done" with oscillation detection |
-| 📝 **AI Code Review** | Multi-persona parallel review with consensus ranking |
-| 📈 **Observability** | Static HTML reports, REST API, health checks |
 | ⚙️ **Pluggable Executors** | 7 executor types including SmallLLMExecutor for 3B-8B models |
-| 🔀 **Dynamic Routing** | Automatic task classification and executor selection by type |
-| 🤖 **Small LLM Support** | Orchestrate 3B-8B quantized models via MCP self-description layers |
 | 🔗 **MCP Session Pool** | Persistent MCP connections with background event loop |
-| 🧠 **Persistent Memory** | Optional Minna Memory integration for cross-session memory |
-| 🔄 **Agent OS 2026** | OODA loop composition, deep memory hooks, agent processes, task DAGs |
-| 🎯 **Authority Inversion** | RunContext as sole runtime truth - 4 inverted modules, SkillCompiler cognitive compiler, PlanValidator (v0.5.0) |
-| 🧬 **7-Tier Memory** | KV, Scratchpad, Ephemeral, Vector, Episodic, DeepMemory (pgvector), GraphMemory - unified by MemoryFacade |
+| 🧬 **7-Tier Memory** | KV, Scratchpad, Ephemeral, Vector, Episodic, DeepMemory (pgvector), GraphMemory — unified by MemoryFacade |
 | 📐 **Embedding Providers** | 7 providers (Local, OpenAI, Voyage, ONNX, Gemini, Keyword, Placeholder) |
+
+**Peer / reference runtime surfaces (intentionally separate from the compiled execution transports):**
+
+| Surface | Status | Notes |
+|---------|--------|-------|
+| 🔁 **AgenticLoop** (`cmd_run`) | Peer pattern | Task-queue-driven "run until done"; deferred adoption onto compiled path pending typed I/O or new runtime feature |
+| 🧭 **OODA Loop** (`OODALoop.run()`) | Peer RunContext-authoritative cognition loop | Not part of the compiled execution transport path adopted by CLI/HTTP |
+| 📝 **spine.review CLI** | Peer pattern | Multi-persona parallel code review; peer orchestration, not compiled-plan execution |
+| 🧠 **Context Stacks** (`run_scenario.py`) | Reference runtime | One-shot instrumented LLM with context-stack system prompt; structurally distinct from compiled PlanArtifact execution |
+| 🔄 **Fan-out / Pipeline patterns** | Reference | Parallelism/fan-out patterns remain deferred on the compiled path |
+| 📈 **Observability** | Reference | Static HTML reports, REST sibling routes, health checks — management/query, not execution |
+| 🧠 **Persistent Memory** | Reference | Optional Minna Memory integration for cross-session memory |
+| 🔄 **Agent OS 2026 (internal phase term)** | Reference / layer name | Internal label for the OODA composition + episodic memory + agent process + task DAG layer (v0.3.30). Not SPINE's public identity — SPINE is an orchestration runtime and multi-agent backbone. |
 
 ---
 
@@ -378,43 +389,48 @@ SPINE has been successfully integrated with:
 | `spine/reports/` | Self-contained HTML reports with Chart.js |
 | `spine/health/` | Component health monitoring |
 
-### CLI Tools
+### CLI and HTTP — Production Transports
+
+The two adopted transports for compiled plan execution:
 
 ```bash
-# Run orchestrator with SubagentExecutor (uses .claude/agents/ personas)
+# CLI: Compile → Policy → Execute → Verify through RunContext (S53)
+python -m spine.orchestrator execute --task "..." [--executor subagent] [--dry-run] [--plan-only]
+
+# HTTP (S54): identical semantics via REST
+POST /api/orchestrator/execute
+Content-Type: application/json
+{
+  "task": "...",
+  "executor": "subagent",
+  "dry_run": false,
+  "plan_only": false
+}
+```
+
+Both transports call `execute_compiled_plan(ctx, executor, project_path)` under the hood and leave all execution truth on `RunContext`. `--dry-run` is execution-adjacent (still runs the official path; per-executor side-effect suppression). `--plan-only` is a compile/policy preview that stops before `begin_execution()`.
+
+### Other Runtime Surfaces — Reference / Peer Patterns
+
+The following exist in the source repository as peer patterns or reference runtimes. They are intentionally separate from the compiled execution transports and are documented here for completeness, not as adopted surfaces.
+
+```bash
+# AgenticLoop (peer pattern — task-queue-driven "run until done")
 python -m spine.orchestrator run --project /path --executor subagent
 
-# Run with Dynamic Routing (auto-selects executor by task type) [v0.3.26]
-python -m spine.orchestrator run --project /path --executor router \
-    --route CODE:subagent --route RESEARCH:claude-code
+# Scenario runner (reference — one-shot instrumented LLM with context stacks)
+python run_scenario.py scenarios/research.yaml
 
-# Run with SmallLLMExecutor (3B-8B models via MCP) [v0.3.27]
-python -m spine.orchestrator run --project /path --executor small-llm
-
-# Classify task type without executing [v0.3.26]
-python -m spine.orchestrator classify --project /path --task-id TASK-001
-
-# Generate MCP self-description for a server [v0.3.28]
-python -m spine.orchestrator describe --project /path --server my-mcp
-
-# Run with context stacks from scenario files
-python -m spine.orchestrator run --project /path --executor subagent --scenario scenarios/research.yaml
-
-# Run with LLM evaluation
-python -m spine.orchestrator run --project /path --llm-eval
-
-# Generate reports
-python -m spine.reports generate --title "Sprint Report" --days 7
-
-# Health checks
-python -m spine.health --verbose
-
-# Code review
+# Code review CLI (peer pattern — multi-persona parallel review)
 python -m spine.review . --parallel
 
-# Start API server
+# Utility CLIs (observability, not execution)
+python -m spine.reports generate --title "Sprint Report" --days 7
+python -m spine.health --verbose
 python -m spine.api --port 8000
 ```
+
+See the [source repository](https://github.com/fbratten/spine) for the full, up-to-date CLI surface.
 
 ---
 

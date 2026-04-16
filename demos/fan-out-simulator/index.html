@@ -48,6 +48,10 @@
             </div>
             <h1 class="text-3xl font-bold text-slate-900 mb-2">Fan-Out Simulator</h1>
             <p class="text-lg text-slate-600">Visualize how parallel task execution works with configurable workers and task counts.</p>
+
+            <div class="mt-4 p-4 rounded-lg border border-indigo-200 bg-indigo-50 text-sm text-indigo-900">
+              <strong>Status:</strong> Reference pattern. Parallelism / fan-out on the compiled execution path remains deferred. The two adopted transports (CLI <code>cmd_execute</code>, HTTP <code>post_execute</code>) run compiled plans sequentially via <code>PlanExecutor</code>. This demo illustrates the pattern's shape, not current production behavior.
+            </div>
         </header>
 
         <!-- Configuration -->
