@@ -1,5 +1,7 @@
 # Agent OS 2026 (v0.3.29-v0.5.0)
 
+> **Scope note (S59):** *"Agent OS 2026"* is the internal name for this **cognition layer within SPINE** (OODA composition + episodic memory + agent process manager + task DAG). It is **not** SPINE's public identity. SPINE is a RunContext-governed orchestration runtime and multi-agent backbone. OODA is a peer RunContext-authoritative cognition loop, not part of the compiled execution transport path adopted by CLI (`cmd_execute`) and HTTP (`POST /api/orchestrator/execute`). See [architecture.md](architecture.md) for the compiled-vs-peer split.
+
 Agent OS 2026 introduces a structured cognition layer to SPINE: an OODA-based execution loop, deep memory with OODA hooks, embedding providers, task DAGs, and agent process management. These components compose existing SPINE subsystems into a coherent autonomous agent runtime.
 
 > **v0.5.0 Update - Authority Inversion:** The OODA Loop and other core modules have been inverted to use RunContext as the sole source of runtime truth. In runtime mode (when `run_context` is provided), OODALoop writes all cycle data directly to RunContext and returns None. LoopContext is NOT used as truth in runtime mode. See [RunContext: Authority Inversion](runcontext.md) for full details.
